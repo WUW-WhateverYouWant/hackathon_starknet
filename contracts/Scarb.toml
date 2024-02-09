@@ -1,0 +1,30 @@
+[package]
+name = "wuw_contracts"
+version = "0.1.0"
+
+[scripts]
+test = "snforge test"
+
+[dependencies]
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.16.0" }
+starknet = "2.4.4"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.8.1" }
+
+
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+[cairo]
+sierra-replace-ids = true
+
+[tool.fmt]
+sort-module-level-items = true
+
+
+[[tool.snforge.fork]]
+exit_first = false
+name = "Mainnet"
+url = ""
+block_id.tag = "Latest"

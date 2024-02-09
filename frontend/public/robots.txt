@@ -1,0 +1,3 @@
+User-agent: *
+Allow: *
+Sitemap: https://starknet.wuwfi.xyz/sitemap.xml
