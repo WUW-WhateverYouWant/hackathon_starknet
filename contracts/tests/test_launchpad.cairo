@@ -170,7 +170,7 @@ mod test_launchpad {
         let name:felt252='TEST_NAME';
         let symbol:felt252='TEST_SYMBOL';
         let sender_felt=ContractAddressIntoFelt252::into(sender);
-        let mut contract_args= array![name,symbol, 100, sender_felt ];
+        let mut contract_args= array![100, sender_felt ];
         Serde::serialize(@sender_felt, ref contract_args);
        
     }
@@ -180,30 +180,6 @@ mod test_launchpad {
         // First declare and deploy a contract
         deploy_contract();
     }
-
-    
-    // #[test]
-    // fn test_launchpad_all() {
-    //     let sender = snforge_std::test_address();
-    //     let name:felt252='TEST_NAME';
-    //     let symbol:felt252='TEST_SYMBOL';
-    //     let sender_felt=ContractAddressIntoFelt252::into(sender);
-    //     let token_contract = declare('ERC20Mintable');
-    //     let mut calldata = array![name, symbol, sender_felt];
-    //     let token_addr = token_contract.deploy(@calldata).unwrap();
-    //     let erc20= IERC20Dispatcher{contract_address:token_addr};
-    //     // erc20.balance_of(sender);
-    //     assert!(erc20.owner()== sender, "no same owner");
-    //     // Change the caller address to 123 when calling the contract at the `contract_address` address
-    //     // start_prank(CheatTarget::One(token_addr), sender);
-    //     println!("Try mint");
-    //     // let mint_amount:u256=10_000*10*18;
-    //         // let mint_amount:u256=10_000_000*pow_256(10,18);
-    //         let mint_amount:u256=10_000*pow_256(10,18);
-    //     // erc20.mint(sender, mint_amount);
-    //     let recipient = snforge_std::test_address();
-    //     erc20.mint(recipient, mint_amount );
-    // }
 
 
 }

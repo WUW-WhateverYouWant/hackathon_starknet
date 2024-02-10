@@ -135,23 +135,13 @@ mod Launchpad {
     #[storage]
     struct Storage {
         launchs:LegacyMap::<u64, Launch>,
+        depositByUserLaunch: LegacyMap::<(ContractAddress, u64), DepositByUser>,
         tokensBlacklistedForBuy:LegacyMap::<ContractAddress, bool>,
         tokensBoosted:LegacyMap::<ContractAddress, bool>,
         is_assets_base_oracle:LegacyMap::<ContractAddress, bool>,
-        depositByUserByLaunch:LegacyMap::<u64, DepositByUser>,
+        
         tokensLaunchIds:LegacyMap::<ContractAddress, u64>,
-        amountByUser:LegacyMap::<u64, u64>,
-        depositByUserLaunch: LegacyMap::<(ContractAddress, u64), DepositByUser>,
-        // mapUsers: LegacyMap::<ContractAddress, LegacyMap::<u64, DepositByUser>>
-        allowances: LegacyMap::<(ContractAddress, ContractAddress), u256>,
-
-        amountDepositInLaunchByUser:LegacyMap::<u64, u64>,
-        depositUserByLaunch:LegacyMap::<(u64, usize), DepositByUser>,
-        // depositByLaunch:LegacyMap::<ContractAddress, DepositByUser>,
-        //   allowances: LegacyMap::<(ContractAddress, ContractAddress), u256>
-        test:LegacyMap::<(ContractAddress, usize), felt252>,
         next_launch_id:u64,
-
 
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -166,8 +156,6 @@ mod Launchpad {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        name: felt252,
-        symbol: felt252,
         fixed_supply: u256,
         recipient: ContractAddress
     ) {
@@ -388,31 +376,21 @@ mod Launchpad {
             assert!(token_amount_base<=launch.remain_balance);
             // Add amount users
 
-            // TODO 
             // Check if amount already exist : create or increase 
 
             let mut amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
-            // let amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
             let base_asset_token_address= amountDeposit.base_asset_token_address;
             IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
 
-
             // TODO oracle calculation ETH
-
             let token_amount=1;
             let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
-
-
-            // User already deposit 
+            // TODO User already deposit 
             if amountDeposit.deposited > 0{ 
                     println!("increase amount deposit");
 
-                    let amount= amountDeposit.deposited+token_amount_base;
-                    amountDeposit.deposited=token_amount_base;
-
-                    // amountDeposit.deposited=token_amount_base;
-
                     // Calculate token redeemable if oracle or not
+                    amountDeposit.deposited+=token_amount_base;
 
                     if !launch.is_base_asset_oracle {
 
@@ -425,6 +403,7 @@ mod Launchpad {
                     } else {
 
                         // TODO better verification for oracle
+                        // TODO token usd 
 
                         let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amountDeposit.total_token_to_be_claimed;
                         let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amountDeposit.remain_token_to_be_claimed;
@@ -466,7 +445,7 @@ mod Launchpad {
 
                         let depositedAmount:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
-                            total_amount:token_amount,
+                            total_amount:token_amount_base,
                             launch_id:launch_id,
                             owner:sender,
                             deposited:token_amount_base,

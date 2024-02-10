@@ -1,0 +1,35 @@
+{
+  "name": "starknet_scripts",
+  "version": "1.0.0",
+  "description": "<!-- prettier-ignore-start --> <!-- markdownlint-disable --> <p align=\"center\">   <img src=\"assets/logo/tokei.png\" height=\"256\"> </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "pnpm run deployement.ts",
+    "deploy:dev": "node run ./scripts/deployement.ts",
+    "start:deploy": "nodemon deployement.ts",
+    "mint:nft":"nodemon mint_nft.ts",
+    "transfer:nft":"nodemon transfer_nft.ts",
+    "deploy:erc20":"nodemon deploy_erc20.ts",
+    "deploy:erc20_mintable":"nodemon deploy_erc20_mintable.ts",
+    "mint:token":"nodemon token_mint.ts",
+    "transfer:erc20":"nodemon transfer_erc20.ts",
+    "deploy:nft":"nodemon ./scripts/erc721/deploy_nft_metadata.ts",
+    "mint:erc20":"nodemon ./scripts/erc20/mint_erc20.ts"
+    
+
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "node": "^21.6.1",
+    "nodemon": "^3.0.3",
+    "starknet": "^5.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
