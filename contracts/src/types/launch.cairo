@@ -8,6 +8,7 @@ struct Launch {
     asset:ContractAddress,
     owner: ContractAddress,
     broker: ContractAddress,
+    base_asset_token_address:ContractAddress,
 
     // price_per_base:u256,
 
@@ -16,7 +17,6 @@ struct Launch {
     end_date: u64,
     remain_balance: u256,
     token_received_per_one_base:u256,
-    base_asset_token_address:ContractAddress,
     is_canceled:bool,
     is_refundable:bool,
     soft_cap:u256,

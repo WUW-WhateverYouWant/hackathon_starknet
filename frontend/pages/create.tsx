@@ -9,7 +9,7 @@ import {
   TabPanel,
 } from "@chakra-ui/react";
 import HeaderSEO from "../components/HeaderSEO";
-import CreateSaleForm from "../components/form/launch";
+import CreateLaunchForm from "../components/form/launch";
 
 const Create: NextPage = ({}) => {
   return (
@@ -34,7 +34,7 @@ const Create: NextPage = ({}) => {
           </TabList>
           <TabPanels>
             <TabPanel>
-              <CreateSaleForm />
+              <CreateLaunchForm />
             </TabPanel>
           </TabPanels>
         </Tabs>

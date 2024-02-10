@@ -96,8 +96,8 @@ const Home: NextPage = ({}) => {
 
             <Tabs>
               <TabList>
-                <Tab>Whatever</Tab>
                 <Tab>Launch</Tab>
+                <Tab>Whatever</Tab>
               </TabList>
               <TabPanels>
                 <TabPanel>

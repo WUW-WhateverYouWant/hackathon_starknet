@@ -55,7 +55,7 @@ export async function create_launch(
       provider
     );
     const erc20Contract = new Contract(ERC20WUW.abi, asset, provider);
-    // Calldata for Create_with_duration
+    // Calldata for CREATE_LAUNCH_BASE_TOKEN_ORACLE
     console.log("Calldata compile")
 
     const calldataCreateWithDuration = CallData.compile({
@@ -87,7 +87,7 @@ export async function create_launch(
       },
       {
         contractAddress: launchpadContract.address,
-        entrypoint: "create_with_range",
+        entrypoint: "CREATE_LAUNCH",
         calldata: calldataCreateWithDuration,
       },
     ],

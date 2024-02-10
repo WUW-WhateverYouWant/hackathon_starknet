@@ -116,7 +116,7 @@ mod test_launchpad {
     use wuw_contracts::launchpad::launchpad::{
         Launchpad
     };
-    // use wuw_contracts::launchpad::*;
+
     use array::ArrayTrait;
     use result::ResultTrait;
     use snforge_std::{
@@ -159,18 +159,7 @@ mod test_launchpad {
             IERC20DispatcherTrait
     };
 
-    fn deploy_setup_erc20(
-        name: felt252, symbol: felt252, initial_supply: u256, recipient: ContractAddress
-    ) -> ContractAddress {
-        let token_contract = declare('ERC20Mintable');
-        let mut calldata = array![name, symbol];
-        Serde::serialize(@initial_supply, ref calldata);
-        Serde::serialize(@recipient, ref calldata);
-        let token_addr = token_contract.deploy(@calldata).unwrap();
-        // let token_dispatcher = ERC20ABI { contract_address: token_addr };
-        token_addr
-        // (token_dispatcher, token_addr)
-    }
+  
 
     // fn deploy_contract() {
     fn deploy_contract()  {
@@ -196,18 +185,14 @@ mod test_launchpad {
     // #[test]
     // fn test_launchpad_all() {
     //     let sender = snforge_std::test_address();
-
     //     let name:felt252='TEST_NAME';
     //     let symbol:felt252='TEST_SYMBOL';
     //     let sender_felt=ContractAddressIntoFelt252::into(sender);
-
     //     let token_contract = declare('ERC20Mintable');
     //     let mut calldata = array![name, symbol, sender_felt];
-  
     //     let token_addr = token_contract.deploy(@calldata).unwrap();
     //     let erc20= IERC20Dispatcher{contract_address:token_addr};
     //     // erc20.balance_of(sender);
-
     //     assert!(erc20.owner()== sender, "no same owner");
     //     // Change the caller address to 123 when calling the contract at the `contract_address` address
     //     // start_prank(CheatTarget::One(token_addr), sender);
@@ -215,13 +200,9 @@ mod test_launchpad {
     //     // let mint_amount:u256=10_000*10*18;
     //         // let mint_amount:u256=10_000_000*pow_256(10,18);
     //         let mint_amount:u256=10_000*pow_256(10,18);
-
     //     // erc20.mint(sender, mint_amount);
     //     let recipient = snforge_std::test_address();
-
     //     erc20.mint(recipient, mint_amount );
-
-
     // }
 
 

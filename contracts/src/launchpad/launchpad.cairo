@@ -42,7 +42,7 @@ trait ILaunchpad<TContractState> {
     fn set_oracle_base_asset(ref self:TContractState,asset_address:ContractAddress, is_oracle:bool);
    
     // TODO add getters before indexer 
-    // fn get_launch_by_id(self: @TContractState, launch_id:u64) -> Launch;
+    fn get_launch_by_id(self: @TContractState, launch_id:u64) -> Launch;
     // fn get_launchs(self: @TContractState) -> Span<Launch>;
 }
 
@@ -190,9 +190,6 @@ mod Launchpad {
 
     }
 
-
-
-
     #[abi(embed_v0)]
     impl LaunchpadImpl of super::ILaunchpad<ContractState> {
 
@@ -204,19 +201,22 @@ mod Launchpad {
 
         }
 
-        // LAUNCH OWNER
-     
+        // VIEW 
+        fn get_launch_by_id(self:@ContractState, launch_id:u64) -> Launch {
 
+            self.launchs.read(launch_id)
+        }
+
+        // LAUNCH OWNER
         fn refund_launch(
             ref self:ContractState,
             launch_id:u64
         )-> u64 {
 
-            
             launch_id
         }
 
-             fn create_launch(ref self: ContractState,
+        fn create_launch(ref self: ContractState,
             asset:ContractAddress,
             base_asset_token_address:ContractAddress,
             total_amount:u256,
@@ -232,6 +232,7 @@ mod Launchpad {
             let timestamp=get_block_timestamp();
             assert!(timestamp<start_date);
             assert!(timestamp<end_date);
+            assert!(start_date<end_date, "start > end");
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
@@ -295,6 +296,7 @@ mod Launchpad {
             let timestamp=get_block_timestamp();
             assert!(timestamp<start_date);
             assert!(timestamp<end_date, "enddate too early");
+            assert!(start_date<end_date, "start > end");
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
@@ -367,41 +369,6 @@ mod Launchpad {
 
         // USERS call
 
-        fn withdraw_token(ref self:ContractState,
-            launch_id:u64
-        )-> u64 {
-
-            let sender = get_caller_address();
-            let launch=self.launchs.read(launch_id);
-            // Check timestamp
-            let timestamp=get_block_timestamp();
-            assert!(timestamp>launch.end_date, "launch not finish");
-            
-            // Verify softcap ok
-            assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
-
-            // Decrease amount
-            let mut amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
-            assert!(amountDeposit.deposited>0, "no buy");
-            // amountDeposit.deposited;
-
-
-            // TODO
-            // Check oracle launch or not 
-            // Send erc20
-            if !launch.is_base_asset_oracle {
-
-
-            } else {
-                // Oracle 
-                // Calculate price in dollar
-
-            }
-
-            launch_id
-        }
-
-
         // TODO verify and check 
         fn buy_token(
             ref self:ContractState,
@@ -433,17 +400,40 @@ mod Launchpad {
             // TODO oracle calculation ETH
 
             let token_amount=1;
+            let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
+
 
             // User already deposit 
             if amountDeposit.deposited > 0{ 
                     println!("increase amount deposit");
 
                     let amount= amountDeposit.deposited+token_amount_base;
-                    amountDeposit.deposited=amount;
+                    amountDeposit.deposited=token_amount_base;
 
                     // amountDeposit.deposited=token_amount_base;
 
-                    self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+                    // Calculate token redeemable if oracle or not
+
+                    if !launch.is_base_asset_oracle {
+
+                        let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amountDeposit.total_token_to_be_claimed;
+                        let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amountDeposit.remain_token_to_be_claimed;
+                        amountDeposit.total_token_to_be_claimed=amount_to_receive;
+                        amountDeposit.remain_token_to_be_claimed=amount_to_claim;
+                        self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+                        
+                    } else {
+
+                        // TODO better verification for oracle
+
+                        let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amountDeposit.total_token_to_be_claimed;
+                        let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amountDeposit.remain_token_to_be_claimed;
+                        amountDeposit.total_token_to_be_claimed=amount_to_receive;
+                        amountDeposit.remain_token_to_be_claimed=amount_to_claim;
+                        self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+
+                    }
+
             }
             else {
                     // TODO 
@@ -451,11 +441,9 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
 
                         let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
-
-
                         let depositedAmount:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
-                            total_amount:token_amount,
+                            total_amount:token_amount_base,
                             launch_id:launch_id,
                             owner:sender,
                             deposited:token_amount_base,
@@ -505,6 +493,46 @@ mod Launchpad {
             self.emit(EventDepositSend {id:launch_id, owner: sender, deposit:amountDeposit.clone()});
             launch_id
         }
+
+        // TODO finish withdraw and test
+        fn withdraw_token(ref self:ContractState,
+            launch_id:u64
+        )-> u64 {
+
+            let sender = get_caller_address();
+            let launch=self.launchs.read(launch_id);
+            let contract= get_contract_address();
+            // Check timestamp
+            let timestamp=get_block_timestamp();
+            assert!(timestamp>launch.end_date, "launch not finish");
+            
+            // Verify softcap ok
+            assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
+
+            let mut amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
+            assert!(amountDeposit.deposited>0, "no buy");
+            assert!(amountDeposit.remain_token_to_be_claimed>0, "no remain balance");
+            // Decrease amount
+            // TODO
+            // Check oracle launch or not 
+            // Send erc20
+            if !launch.is_base_asset_oracle {
+                // Send amount by claim 
+                let amount_to_send=amountDeposit.remain_token_to_be_claimed;
+
+                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer_from(contract, amountDeposit.owner, amount_to_send );
+                amountDeposit.remain_token_to_be_claimed=0;
+                self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+
+            } else {
+                // Oracle 
+                // Calculate price in dollar
+
+            }
+
+            launch_id
+        }
+
 
     }
 

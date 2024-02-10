@@ -4,9 +4,9 @@ import { GetTransactionReceiptResponse, Uint256 } from "starknet";
 
 /** UI interface */
 
-export enum TypeCreationStream {
-  CREATE_WITH_DURATION="CREATE_WITH_DURATION",
-  CREATE_WITH_RANGE="CREATE_WITH_RANGE"
+export enum TypeCreationLaunch {
+  CREATE_LAUNCH="CREATE_LAUNCH",
+  CREATE_LAUNCH_BASE_TOKEN_ORACLE="CREATE_LAUNCH_BASE_TOKEN_ORACLE",
 }
 export enum StreamCardView  {
   SENDER_VIEW="SENDER_VIEW",
@@ -32,12 +32,22 @@ export interface LinkItemProps {
 
 export interface CreateLaunch extends LaunchDurationProps {
   sender: string;
-  recipient: string;
   total_amount: number;
+  // total_amount: Uint256,
   asset: string;
-  cancelable: boolean;
-  range: Range;
-  broker: Broker;
+
+  base_asset_token_address: string,
+  token_received_per_one_base: Uint256,
+  cancelable: boolean,
+  transferable: boolean,
+  start_date: number,
+  end_date: number,
+  soft_cap: Uint256,
+  max_deposit_by_user:Uint256
+
+  // range: Range;
+  // broker: Broker;
+
 
 }
 

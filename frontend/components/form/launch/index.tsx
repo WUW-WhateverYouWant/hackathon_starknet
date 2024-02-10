@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount, useNetwork } from "@starknet-react/core";
 import { useEffect, useState } from "react";
-import { CreateLaunch, TypeCreationStream } from "../../../types";
+import { CreateLaunch, TypeCreationLaunch } from "../../../types";
 import e from "cors";
 
 import { ADDRESS_LENGTH, CONFIG_WEBSITE } from "../../../constants";
@@ -30,51 +30,55 @@ import {
   BigNumberish,
   cairo,
   TransactionStatus,
-
 } from "starknet";
 import { ExternalStylizedButtonLink } from "../../button/NavItem";
 import { VoyagerExplorerImage } from "../../view/VoyagerExplorerImage";
+import { create_launch } from "../../../hooks/launch/create_launch";
 
-interface ICreateSaleForm { }
+interface ICreateSaleForm {}
 
-
-const CreateSaleForm = ({ }: ICreateSaleForm) => {
+const CreateLaunchForm = ({}: ICreateSaleForm) => {
   const toast = useToast();
   const accountStarknet = useAccount();
-  const network = useNetwork()
-  const chainId= network.chain.id
-  const networkName= network.chain.name
-  
+  const network = useNetwork();
+  const chainId = network.chain.id;
+  const networkName = network.chain.name;
+
   const account = accountStarknet?.account;
   const address = accountStarknet?.account?.address;
   const [txHash, setTxHash] = useState<string | undefined>();
   const [isDisabled, setIsDisabled] = useState<boolean>(true);
-  const [typeStreamCreation, setTypeStreamCreation] = useState<
-    TypeCreationStream | undefined
-  >(TypeCreationStream.CREATE_WITH_RANGE);
+  const [typeLaunchCreation, setTypeLaunchCreation] = useState<
+    TypeCreationLaunch | undefined
+  >(TypeCreationLaunch.CREATE_LAUNCH);
   const [recipient, setRecipient] = useState<boolean>(true);
   const [typeCreation, setTypeCreation] = useState<boolean>(true);
   const [form, setForm] = useState<CreateLaunch | undefined>({
     sender: account?.address,
-    recipient: undefined,
     total_amount: undefined,
     asset: undefined,
     cancelable: true,
     transferable: true,
-    range: {
-      start: undefined,
-      cliff: undefined,
-      end: undefined,
-    },
-    broker: {
-      account: undefined,
-      fee: undefined,
-    },
+    token_received_per_one_base: undefined,
+    base_asset_token_address: undefined,
+    start_date: undefined,
+    end_date: undefined,
+    // range: {
+    //   start: undefined,
+    //   cliff: undefined,
+    //   end: undefined,
+    // },
+    // broker: {
+    //   account: undefined,
+    //   fee: undefined,
+    // },
     duration_cliff: undefined,
     duration_total: undefined,
     broker_account: account?.address,
     broker_fee: undefined,
     broker_fee_nb: undefined,
+    max_deposit_by_user: undefined,
+    soft_cap: undefined,
   });
   useEffect(() => {
     if (address && account) {
@@ -85,9 +89,8 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
 
   /** @TODO refacto */
   const prepareHandleCreateStream = async (
-    typeOfCreation: TypeCreationStream
+    typeOfCreation: TypeCreationLaunch
   ) => {
-
     try {
       const CONTRACT_ADDRESS = CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK];
 
@@ -154,45 +157,39 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
         });
         return;
       }
-
-      if (!form?.recipient) {
-        toast({
-          title: "Recipient not provided",
-          status: "warning",
-          isClosable: true,
-        });
-        return;
-      }
       /***@TODO use starknet check utils isAddress */
-
-      console.log("form?.recipient?.length", form?.recipient?.length)
+      console.log(
+        "form?.recipient?.length",
+        form?.base_asset_token_address?.length
+      );
       if (
-        form?.recipient?.length != ADDRESS_LENGTH
-        && !cairo.isTypeContractAddress(form?.recipient)
+        form?.base_asset_token_address?.length != ADDRESS_LENGTH &&
+        !cairo.isTypeContractAddress(form?.base_asset_token_address)
         // !cairo.isTypeContractAddress(form?.recipient)
-
       ) {
         toast({
           title:
-            "Recipient is not address size. Please verify your recipient address",
+            "Base asset is not address size. Please verify your base address",
           status: "warning",
           isClosable: true,
         });
         return;
       }
 
-      if (!form?.broker?.fee) {
+      console.log(
+        "form?.recipient?.length",
+        form?.base_asset_token_address?.length
+      );
+      if (
+        form?.asset?.length != ADDRESS_LENGTH &&
+        !cairo.isTypeContractAddress(form?.asset)
+        // !cairo.isTypeContractAddress(form?.recipient)
+      ) {
         toast({
-          title: "No fees provided",
+          title:
+            "Token to launch is not address size. Please verify your launch  address",
           status: "warning",
-        });
-        return;
-      }
-
-      if (!form?.broker?.account) {
-        toast({
-          title: "No broker account provided",
-          status: "warning",
+          isClosable: true,
         });
         return;
       }
@@ -206,20 +203,28 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
       } catch (e) {
       } finally {
       }
-      const total_amount_nb =
-        form?.total_amount * (10 ** Number(decimals));
+      const total_amount_nb = form?.total_amount * 10 ** Number(decimals);
       let total_amount;
 
       if (Number.isInteger(total_amount_nb)) {
         total_amount = cairo.uint256(total_amount_nb);
-      }
-      else if (!Number.isInteger(total_amount_nb)) {
+      } else if (!Number.isInteger(total_amount_nb)) {
         // total_amount=total_amount_nb
         total_amount = uint256.bnToUint256(BigInt(total_amount_nb));
       }
       // Call function. Last check input
-      if (typeOfCreation == TypeCreationStream.CREATE_WITH_DURATION) {
-        if (!form?.duration_cliff) {
+      if (
+        typeOfCreation == TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE
+      ) {
+        if (!form?.start_date) {
+          toast({
+            title: "Please provide Start date",
+            status: "warning",
+          });
+          return;
+        }
+
+        if (!form?.end_date) {
           toast({
             title: "Please provide End date",
             status: "warning",
@@ -227,34 +232,10 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
           return;
         }
 
-        if (!form?.duration_total) {
-          toast({
-            title: "Please provide End date",
-            status: "warning",
-          });
-          return;
-        }
-
-        if (!form?.broker_account) {
-          toast({
-            title: "Please provide broker account",
-            status: "warning",
-          });
-          return;
-        }
-
-        if (cairo.isTypeContractAddress(form?.broker_account)) {
+        if (!cairo.isTypeContractAddress(form?.base_asset_token_address)) {
           toast({
             title: "Please provide a valid Address for your broker account",
             status: "warning",
-          });
-          return;
-        }
-
-        if (form?.duration_total < form?.duration_cliff) {
-          toast({
-            title: "Duration total need to be superior too duration_cliff",
-            status: "error",
           });
           return;
         }
@@ -267,20 +248,20 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
           return;
         }
 
-        // const { isSuccess, message, hash } = await create_with_duration(
-        //   accountStarknet?.account,
-        //   account?.address, //Sender
-        //   form?.recipient, //Recipient
-        //   total_amount, // Total amount
-        //   form?.asset, // Asset
-        //   form?.cancelable, // Asset
-        //   form?.transferable, // Transferable
-        //   parseInt(form?.duration_cliff.toString()),
-        //   parseInt(form?.duration_total.toString()),
-        //   form?.broker_account,
-        //   form?.broker_fee
-        //   // form?.broker_fee_nb
-        // );
+        const { isSuccess, message, hash } = await create_launch(
+          accountStarknet?.account,
+          form?.asset, // Asset
+          form?.base_asset_token_address, //Base address liquidity
+          total_amount, // Total amount
+          form?.token_received_per_one_base,
+          form?.cancelable, // Asset
+          form?.transferable, // Transferable
+          parseInt(form?.duration_cliff.toString()),
+          parseInt(form?.duration_total.toString()),
+          form?.soft_cap,
+          form?.max_deposit_by_user
+          // form?.broker_fee_nb
+        );
         // if (hash) {
         //   setTxHash(hash)
         //   const tx = await account.waitForTransaction(hash);
@@ -302,7 +283,7 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
         // }
         // console.log("message", message);
       } else {
-        if (!form?.range.start) {
+        if (!form?.start_date) {
           toast({
             title: "Provide Start date",
             status: "warning",
@@ -310,7 +291,7 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
           return {};
         }
 
-        if (!form?.range.end) {
+        if (!form?.end_date) {
           toast({
             title: "Please provide End date",
             status: "warning",
@@ -318,15 +299,15 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
           return;
         }
 
-        if (!form?.range.cliff) {
+        if (!form?.base_asset_token_address) {
           toast({
-            title: "Please provide Cliff",
+            title: "Base asset token address",
             status: "warning",
           });
           return;
         }
 
-        // const { isSuccess, message, hash } = await create_with_range(
+        // const { isSuccess, message, hash } = await CREATE_LAUNCH(
         //   accountStarknet?.account,
         //   account?.address, //Sender
         //   form?.recipient, //Recipient
@@ -361,11 +342,9 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
         //     })
         //   }
         // }
-
-
       }
     } catch (e) {
-      console.log("prepareHandleCreateStream", e)
+      console.log("prepareHandleCreateStream", e);
     }
   };
 
@@ -386,22 +365,38 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
         display={"flex"}
         gap={{ base: "1em" }}
       >
+        <Button
+          onClick={() =>
+            setTypeLaunchCreation(TypeCreationLaunch.CREATE_LAUNCH)
+          }
+        >
+          Create launch
+        </Button>
 
-        <Button onClick={() => setTypeStreamCreation(TypeCreationStream.CREATE_WITH_DURATION)}>Stream with duration</Button>
-        <Button onClick={() => setTypeStreamCreation(TypeCreationStream.CREATE_WITH_RANGE)}>Stream with range</Button>
+        <Button
+          onClick={() =>
+            setTypeLaunchCreation(
+              TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE
+            )
+          }
+        >
+          Launch base token oracle
+        </Button>
       </Box>
-
 
       {txHash && (
         <Box py={{ base: "1em" }}>
           <ExternalStylizedButtonLink
-            href={`${CHAINS_NAMES.GOERLI == networkName.toString() ? CONFIG_WEBSITE.page.goerli_voyager_explorer : CONFIG_WEBSITE.page.voyager_explorer}/tx/${txHash}`}
+            href={`${
+              CHAINS_NAMES.GOERLI == networkName.toString()
+                ? CONFIG_WEBSITE.page.goerli_voyager_explorer
+                : CONFIG_WEBSITE.page.voyager_explorer
+            }/tx/${txHash}`}
           >
             <VoyagerExplorerImage></VoyagerExplorerImage>
           </ExternalStylizedButtonLink>
         </Box>
       )}
-
 
       <Box
         py={{ base: "0.25em", md: "1em" }}
@@ -428,46 +423,60 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
             }}
           ></Input>
 
-          <Input
-            // my='1em'
-            my={{ base: "0.25em", md: "0.5em" }}
-            py={{ base: "0.5em" }}
-            onChange={(e) => {
-              setForm({ ...form, asset: e.target.value });
-            }}
-            placeholder="Asset address"
-          ></Input>
+          {TypeCreationLaunch.CREATE_LAUNCH == typeLaunchCreation&& (
+            <Input
+              // my='1em'
+              my={{ base: "0.25em", md: "0.5em" }}
+              py={{ base: "0.5em" }}
+              onChange={(e) => {
+                setForm({ ...form, asset: e.target.value });
+              }}
+              placeholder="Asset address"
+            ></Input>
+          )}
 
-          <Input
-            // my='1em'
-            my={{ base: "0.25em", md: "0.5em" }}
-            py={{ base: "0.5em" }}
-            onChange={(e) => {
-              setForm({ ...form, recipient: e.target.value });
-            }}
-            placeholder="Recipient"
-          ></Input>
+          {TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE  == typeLaunchCreation && (
+            <Input
+              // my='1em'
+              my={{ base: "0.25em", md: "0.5em" }}
+              py={{ base: "0.5em" }}
+              onChange={(e) => {
+                setForm({ ...form, asset: e.target.value });
+              }}
+              placeholder="Asset address"
+            ></Input>
+          )}
 
           <Box height={"100%"}>
             <Box>
-              <Text textAlign={"left"}>Account</Text>
+              <Text textAlign={"left"}>Base asset</Text>
               <Input
                 my={{ base: "0.25em", md: "0.5em" }}
                 py={{ base: "0.5em" }}
-                aria-valuetext={form?.broker?.account}
+                aria-valuetext={form?.base_asset_token_address}
                 onChange={(e) => {
                   setForm({
                     ...form,
-                    broker_account: e.target.value,
-                    sender: e.target.value,
-                    broker: {
-                      ...form.broker,
-                      account: e.target.value,
-                    },
+                    base_asset_token_address: e.target.value,
                   });
                 }}
-                placeholder="Broker account address"
+                placeholder="Base token address"
               ></Input>
+
+              <Input
+                py={{ base: "0.5em" }}
+                type="number"
+                my={{ base: "0.25em", md: "0.5em" }}
+                aria-valuetext={String(form?.soft_cap)}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    soft_cap: cairo.uint256(parseInt(e?.target?.value)),
+                  });
+                }}
+                placeholder="Soft cap"
+              ></Input>
+
               <Input
                 py={{ base: "0.5em" }}
                 type="number"
@@ -475,23 +484,20 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
                 onChange={(e) => {
                   setForm({
                     ...form,
-                    // broker_fee: uint256.bnToUint256(Number(e?.target?.value)),
-                    // broker_fee: cairo.uint256(Number(e?.target?.value)),
-                    broker_fee: cairo.uint256(parseInt(e?.target?.value)),
-                    broker_fee_nb: Number(e?.target?.value),
-
-                    broker: {
-                      ...form.broker,
-                      fee: Number(e.target.value),
-                    },
+                    token_received_per_one_base: cairo.uint256(
+                      parseInt(e?.target?.value)
+                    ),
+                    // broker_fee_nb: Number(e?.target?.value),
+                    // broker: {
+                    //   ...form.broker,
+                    //   fee: Number(e.target.value),
+                    // },
                   });
                 }}
-                placeholder="Fee broker"
+                placeholder="Token receive per base token"
               ></Input>
 
-              <Box display={{ base: "flex" }}
-                gap={{ base: "5em" }}
-              >
+              <Box display={{ base: "flex" }} gap={{ base: "5em" }}>
                 <Box>
                   <Text>Cancelable</Text>
                   <Checkbox
@@ -566,7 +572,6 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
                   ></Checkbox>
                 </Box>
               </Box>
-
             </Box>
           </Box>
         </Box>
@@ -586,9 +591,7 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
             p={{ base: "1em" }}
             borderRadius={{ base: "5px" }}
           >
-
-            {typeStreamCreation == TypeCreationStream.CREATE_WITH_RANGE &&
-
+            {typeLaunchCreation == TypeCreationLaunch.CREATE_LAUNCH && (
               <Box>
                 <Text
                   textAlign={"left"}
@@ -609,43 +612,10 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
                   onChange={(e) => {
                     setForm({
                       ...form,
-                      range: {
-                        ...form.range,
-                        start: new Date(e.target.value).getTime(),
-                      },
+                      start_date: new Date(e.target.value).getTime(),
                     });
                   }}
                   placeholder="Start date"
-                ></Input>
-
-
-                <Text
-                  textAlign={"left"}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                >
-                  Cliff date
-                </Text>
-                <Input
-                  py={{ base: "0.5em" }}
-                  my={{ base: "0.25em", md: "0.5em" }}
-                  // type="number"
-                  type="datetime-local"
-                  placeholder="Cliff"
-                  color={useColorModeValue("gray.100", "gray.300")}
-                  _placeholder={{
-                    color: useColorModeValue("gray.100", "gray.300"),
-                  }}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      range: {
-                        ...form.range,
-                        // cliff: Number(e.target.value),
-                        cliff: new Date(e.target.value).getTime(),
-
-                      },
-                    });
-                  }}
                 ></Input>
 
                 <Text
@@ -665,18 +635,16 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
                   onChange={(e) => {
                     setForm({
                       ...form,
-                      range: {
-                        ...form.range,
-                        end: new Date(e.target.value).getTime(),
-                      },
+                      end_date: new Date(e.target.value).getTime(),
                     });
                   }}
                   placeholder="End date"
                 ></Input>
-              </Box>}
-            {typeStreamCreation == TypeCreationStream.CREATE_WITH_DURATION &&
+              </Box>
+            )}
+            {typeLaunchCreation ==
+              TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE && (
               <Box>
-
                 <FormLabel fontFamily={"monospace"}>
                   Duration stream type:{" "}
                 </FormLabel>
@@ -727,54 +695,49 @@ const CreateSaleForm = ({ }: ICreateSaleForm) => {
                   placeholder="Duration total"
                 ></Input>
               </Box>
-            }
-
+            )}
           </Box>
         </Box>
       </Box>
 
       <Box>
-        <Text
-          py={{ base: "0.1em" }}
-          textAlign={{ base: "left" }}
-        >Choose your type of stream to create</Text>
+        <Text py={{ base: "0.1em" }} textAlign={{ base: "left" }}>
+          Choose your type of stream to create
+        </Text>
 
         <Box
           textAlign={"center"}
           display={{ base: "flex" }}
           gap={{ base: "0.5em" }}
         >
-
-          {typeStreamCreation == TypeCreationStream.CREATE_WITH_DURATION ?
+          {typeLaunchCreation ==
+          TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE ? (
             <Button
               bg={useColorModeValue("brand.primary", "brand.primary")}
               disabled={isDisabled}
               onClick={() => {
                 prepareHandleCreateStream(
-                  TypeCreationStream.CREATE_WITH_DURATION
+                  TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE
                 );
               }}
             >
-              Create duration sale ⏳
-            </Button> :
+              Create launch with base token ⏳
+            </Button>
+          ) : (
             <Button
               bg={useColorModeValue("brand.primary", "brand.primary")}
               disabled={isDisabled}
               onClick={() => {
-                prepareHandleCreateStream(TypeCreationStream.CREATE_WITH_RANGE);
+                prepareHandleCreateStream(TypeCreationLaunch.CREATE_LAUNCH);
               }}
             >
-              Create sale
+              Create launch
             </Button>
-
-          }
-
-
-
+          )}
         </Box>
       </Box>
-    </Box >
+    </Box>
   );
 };
 
-export default CreateSaleForm;
+export default CreateLaunchForm;
