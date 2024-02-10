@@ -5,7 +5,12 @@ use starknet::ContractAddress;
 mod ERC20Mintable {
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::access::accesscontrol::interface::IAccessControl;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
 
+    const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
+    const ADMIN_ROLE: felt252 = selector!("ADMIN_ROLE");
+    const MAKER_ROLE: felt252 = selector!("MAKER_ROLE");
     use starknet::ContractAddress;
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
@@ -58,22 +63,24 @@ mod ERC20Mintable {
         ref self: ContractState,
         name: felt252,
         symbol: felt252,
-        owner: ContractAddress
+        owner: ContractAddress,
+        initial_supply:u256
     ) {
-        self.erc20.initializer(name, symbol);
         self.ownable.initializer(owner);
+        self.erc20.initializer(name, symbol);
+        self.erc20._mint(owner, initial_supply);
+
     }
 
+    // TODO check owner 
     #[external(v0)]
     fn mint(
         ref self: ContractState,
         recipient: ContractAddress,
         amount: u256
     ) {
-        // This function is NOT protected which means
-        // ANYONE can mint tokens
         self.ownable.assert_only_owner();
         self.erc20._mint(recipient, amount);
-
     }
+
 }

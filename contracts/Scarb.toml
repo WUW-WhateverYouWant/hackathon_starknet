@@ -15,6 +15,7 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", ta
 [[target.starknet-contract]]
 sierra = true
 casm = true
+allowed-libfuncs-list.name = "experimental"
 
 [cairo]
 sierra-replace-ids = true
