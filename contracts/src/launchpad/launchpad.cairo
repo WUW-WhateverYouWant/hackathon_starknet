@@ -3,18 +3,68 @@ use starknet::{
     ContractAddress
 };
 
+use wuw_contracts::types::launch:: {
+    Launch, AmountLaunch,
+    DepositByUser
+};
+
+
 #[starknet::interface]
 trait ILaunchpad<TContractState> {
-    fn create_launch(ref self:TContractState,asset:ContractAddress, token_buy:ContractAddress, total_amount:u256, start_date:u64, end_date:u64, soft_cap:u256, max_deposit_by_user:u256)-> u64;
+    fn create_launch(ref self:TContractState,
+        asset:ContractAddress, 
+        base_asset_token_address:ContractAddress, 
+        total_amount:u256, 
+        token_received_per_one_base:u256,
+        start_date:u64, 
+        end_date:u64, 
+        soft_cap:u256,
+        max_deposit_by_user:u256,
+     
+     )-> u64;
+
+
+    fn create_launch_base_oracle(ref self:TContractState,
+        asset:ContractAddress, 
+        token_buy:ContractAddress, 
+        total_amount:u256, 
+        start_date:u64, 
+        end_date:u64, 
+        soft_cap:u256, 
+        max_deposit_by_user:u256,
+        token_per_dollar:u256
+    )-> u64;
+
     fn refund_launch(ref self:TContractState,launch_id:u64)-> u64;
-    fn buy_token(ref self:TContractState,launch_id:u64, token_amount:u256)-> u64;
+    fn buy_token(ref self:TContractState,launch_id:u64, token_amount_base:u256)-> u64;
     fn withdraw_token(ref self:TContractState,launch_id:u64)-> u64;
+    fn cancel_launch(ref self:TContractState,launch_id:u64)-> u64;
+    fn set_oracle_base_asset(ref self:TContractState,asset_address:ContractAddress, is_oracle:bool);
+   
+    // TODO add getters before indexer 
+    // fn get_launch_by_id(self: @TContractState, launch_id:u64) -> Launch;
+    // fn get_launchs(self: @TContractState) -> Span<Launch>;
 }
 
 #[starknet::contract]
 mod Launchpad {
+    // use super::Launch;
+    use wuw_contracts::types::launch:: {
+        Launch, AmountLaunch,
+        DepositByUser,
+
+        // Event 
+        LaunchCreated,
+        EventDepositSend,
+        EventBaseOracleSet,
+    };
+
+
+
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::access::accesscontrol::AccessControlComponent;
+
     use core::starknet::event::EventEmitter;
     use core::result::ResultTrait;
     use starknet::{
@@ -35,87 +85,59 @@ mod Launchpad {
     use debug::PrintTrait;
     use zeroable::Zeroable;
 
-    #[derive( Drop, Copy, starknet::Store, Serde )]
-    struct Launch {
-        asset:ContractAddress,
-        owner: ContractAddress,
-        broker: ContractAddress,
+    // SR5 Component 
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
 
-        // price_per_base:u256,
+    // Owner access
 
-        total_amount: u256,
-        start_date: u64,
-        end_date: u64,
-        remain_balance: u256,
+    use openzeppelin::access::ownable::OwnableComponent;
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
-        token_buy:ContractAddress,
-        base_token:ContractAddress,
-        is_canceled:bool,
-        is_refundable:bool,
-        soft_cap:u256,
-        // hard_cap:u256,
-        max_deposit_by_user:u256,
-        
-        amounts:AmountLaunch,
-        // balance: felt252,
-    }
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl OwnableCamelOnlyImpl =
+        OwnableComponent::OwnableCamelOnlyImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
-  #[derive( Drop, Copy, starknet::Store, Serde )]
-    struct DepositByUser {
-        launch_id:u64,
-        owner: ContractAddress,
-        base_token:ContractAddress,
-        total_amount: u256,
-        /// The initial amount deposited in the stream, net of fees.
-        deposited: u256,
-        /// The cumulative amount withdrawn from the stream.
-        withdrawn: u256,
-        redeemable:u256,
-        /// The amount refunded to the sender. Unless the stream was canceled, this is always zero.
-        refunded: u256,
-        withdraw_amount:u256,
-        is_canceled:bool,
-    }
+    // Access control role 
+    const ADMIN_ROLE: felt252 = selector!("ADMIN_ROLE");
+    const OWNER_ROLE: felt252 = selector!("OWNER_ROLE");
+    const MANAGER_ROLE: felt252 = selector!("MANAGER_ROLE");
 
-    #[derive(Drop, Copy, starknet::Store, Serde, PartialEq)]
-    struct AmountLaunch {
-        /// The initial amount deposited in the stream, net of fees.
-        deposited: u256,
-        /// The cumulative amount withdrawn from the stream.
-        withdrawn: u256,
-        /// The amount refunded to the sender. Unless the stream was canceled, this is always zero.
-        refunded: u256,
-    }
+    
+    component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
+    // AccessControl
+    #[abi(embed_v0)]
+    impl AccessControlImpl =
+        AccessControlComponent::AccessControlImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
 
-    #[derive(Drop, starknet::Event)]
-    struct LaunchCreated {
-        // #[key]
-        id:u64,
 
-        launch:Launch,
-        owner:ContractAddress,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct EventDepositSend {
-        // #[key]
-        id:u64,
-        deposit:DepositByUser,
-        owner:ContractAddress,
-    }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         LaunchCreated: LaunchCreated,
-        EventDepositSend: EventDepositSend
-        // #[flat]
+        EventDepositSend: EventDepositSend,
+        EventBaseOracleSet:EventBaseOracleSet,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
+
+        #[flat]
+        SRC5Event: SRC5Component::Event,
     }
 
     #[storage]
     struct Storage {
         launchs:LegacyMap::<u64, Launch>,
         tokensBlacklistedForBuy:LegacyMap::<ContractAddress, bool>,
+        tokensBoosted:LegacyMap::<ContractAddress, bool>,
+        is_assets_base_oracle:LegacyMap::<ContractAddress, bool>,
         depositByUserByLaunch:LegacyMap::<u64, DepositByUser>,
         tokensLaunchIds:LegacyMap::<ContractAddress, u64>,
         amountByUser:LegacyMap::<u64, u64>,
@@ -129,6 +151,16 @@ mod Launchpad {
         //   allowances: LegacyMap::<(ContractAddress, ContractAddress), u256>
         test:LegacyMap::<(ContractAddress, usize), felt252>,
         next_launch_id:u64,
+
+
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+
+        #[substorage(v0)]
+        accesscontrol: AccessControlComponent::Storage,
+
+        #[substorage(v0)]
+        src5: SRC5Component::Storage,
     }
  
     #[constructor]
@@ -140,30 +172,55 @@ mod Launchpad {
         recipient: ContractAddress
     ) {
 
+        let owner=get_caller_address();
+
         self.next_launch_id.write(0);
+        self.ownable.initializer(owner);
+
+        // AccessControl-related initialization
+        self.accesscontrol.initializer();
+        self.accesscontrol._grant_role(ADMIN_ROLE, owner);
+        self.accesscontrol._grant_role(OWNER_ROLE, owner);
     }
+
+
+    // TODO implement internal functions and refacto
+    #[generate_trait]
+    impl LaunchpadInternalImpl of LaunchpadInternalTrait {
+
+    }
+
+
+
 
     #[abi(embed_v0)]
     impl LaunchpadImpl of super::ILaunchpad<ContractState> {
+
+        // ADMIN
+        fn set_oracle_base_asset(ref self:ContractState, asset_address:ContractAddress, is_oracle:bool)  {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.is_assets_base_oracle.write(asset_address, is_oracle);
+            self.emit(EventBaseOracleSet{ asset:asset_address, is_oracle:is_oracle});
+
+        }
+
+        // LAUNCH OWNER
      
 
         fn refund_launch(
             ref self:ContractState,
             launch_id:u64
         )-> u64 {
+
+            
             launch_id
         }
 
-        fn withdraw_token(ref self:ContractState,
-            launch_id:u64
-        )-> u64 {
-            launch_id
-        }
-
-        fn create_launch(ref self: ContractState,
+             fn create_launch(ref self: ContractState,
             asset:ContractAddress,
-            token_buy:ContractAddress,
+            base_asset_token_address:ContractAddress,
             total_amount:u256,
+            token_received_per_one_base:u256,
             start_date:u64,
             end_date:u64,
             soft_cap:u256,
@@ -173,7 +230,7 @@ mod Launchpad {
 
             // TODO check date
             let timestamp=get_block_timestamp();
-            assert!(timestamp>start_date);
+            assert!(timestamp<start_date);
             assert!(timestamp<end_date);
 
             let contract_address=get_contract_address();
@@ -185,7 +242,9 @@ mod Launchpad {
             let amounts:AmountLaunch = AmountLaunch {
                 deposited:total_amount,
                 withdrawn:0,
-                refunded:0
+                refunded:0,
+                total_token_to_be_claimed:total_amount,
+                remain_token_to_be_claimed:total_amount,
             };
 
             let launch:Launch= Launch {
@@ -196,13 +255,15 @@ mod Launchpad {
                 owner:sender,
                 asset:asset,
                 broker:sender,
-                token_buy:token_buy,
-                base_token:token_buy,
+                base_asset_token_address:base_asset_token_address,
                 soft_cap:soft_cap,
                 is_canceled:false,
                 max_deposit_by_user:max_deposit_by_user,
+                token_received_per_one_base:token_received_per_one_base,
                 amounts,
-                is_refundable:true
+                is_refundable:true,
+                is_base_asset_oracle:false,
+                token_per_dollar:0
 
             };
      
@@ -215,11 +276,137 @@ mod Launchpad {
             next_id
         }
 
+        fn create_launch_base_oracle(ref self: ContractState,
+            asset:ContractAddress,
+            token_buy:ContractAddress,
+            total_amount:u256,
+            start_date:u64,
+            end_date:u64,
+            soft_cap:u256,
+            max_deposit_by_user:u256,
+            token_per_dollar:u256
+
+
+        ) -> u64 {
+
+            // Verify base token 
+            assert!(self.is_assets_base_oracle.read(asset) == true, "not base oracle token");
+            // TODO check date
+            let timestamp=get_block_timestamp();
+            assert!(timestamp<start_date);
+            assert!(timestamp<end_date, "enddate too early");
+
+            let contract_address=get_contract_address();
+            let sender=get_caller_address();
+
+            let current_id= self.next_launch_id.read();
+            let next_id= current_id+1;
+
+            let amounts:AmountLaunch = AmountLaunch {
+                deposited:total_amount,
+                withdrawn:0,
+                refunded:0,
+                total_token_to_be_claimed:total_amount,
+                remain_token_to_be_claimed:total_amount,
+            };
+
+            let launch:Launch= Launch {
+                total_amount:total_amount,
+                remain_balance:total_amount,
+                start_date:start_date,
+                end_date:end_date,
+                token_received_per_one_base:0,
+                owner:sender,
+                asset:asset,
+                broker:sender,
+                base_asset_token_address:token_buy,
+                soft_cap:soft_cap,
+                is_canceled:false,
+                max_deposit_by_user:max_deposit_by_user,
+                amounts,
+                is_refundable:true,
+                is_base_asset_oracle:true,
+                token_per_dollar:token_per_dollar
+
+            };
+     
+            // SEND TOKEN
+            IERC20Dispatcher { contract_address: asset }.transfer_from(sender, contract_address, total_amount);
+
+            self.launchs.write(current_id, launch);
+            self.next_launch_id.write(next_id);
+            self.emit(LaunchCreated { id:current_id, owner: sender, launch:launch.clone()});
+            next_id
+        }
+
+        fn cancel_launch(ref self:ContractState,
+            launch_id:u64
+        )-> u64 {
+
+
+            let contract_address=get_contract_address();
+            let sender=get_caller_address();
+
+            let mut launch= self.launchs.read(launch_id);
+
+            // Verify owner 
+            assert!(sender == launch.owner, "not owner");
+
+            // Check timestamp
+            let timestamp=get_block_timestamp();
+            assert!(timestamp<launch.end_date);
+
+            // Update
+            launch.is_canceled=true;
+            self.launchs.write(launch_id, launch);
+
+
+            launch_id
+        }
+
+
+        // USERS call
+
+        fn withdraw_token(ref self:ContractState,
+            launch_id:u64
+        )-> u64 {
+
+            let sender = get_caller_address();
+            let launch=self.launchs.read(launch_id);
+            // Check timestamp
+            let timestamp=get_block_timestamp();
+            assert!(timestamp>launch.end_date, "launch not finish");
+            
+            // Verify softcap ok
+            assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
+
+            // Decrease amount
+            let mut amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
+            assert!(amountDeposit.deposited>0, "no buy");
+            // amountDeposit.deposited;
+
+
+            // TODO
+            // Check oracle launch or not 
+            // Send erc20
+            if !launch.is_base_asset_oracle {
+
+
+            } else {
+                // Oracle 
+                // Calculate price in dollar
+
+            }
+
+            launch_id
+        }
+
+
         // TODO verify and check 
         fn buy_token(
             ref self:ContractState,
             launch_id:u64,
-            token_amount:u256
+            token_amount_base:u256
         )-> u64 {
 
             let sender = get_caller_address();
@@ -231,7 +418,7 @@ mod Launchpad {
             assert!(timestamp<launch.end_date);
 
             // Check amount
-            assert!(token_amount<=launch.remain_balance);
+            assert!(token_amount_base<=launch.remain_balance);
             // Add amount users
 
             // TODO 
@@ -239,72 +426,81 @@ mod Launchpad {
 
             let mut amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
             // let amountDeposit = self.depositByUserLaunch.read((sender, launch_id));
-            let base_token= amountDeposit.base_token;
-            IERC20Dispatcher {contract_address:base_token}.transfer_from(sender, contract, token_amount);
+            let base_asset_token_address= amountDeposit.base_asset_token_address;
+            IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
 
+
+            // TODO oracle calculation ETH
+
+            let token_amount=1;
+
+            // User already deposit 
             if amountDeposit.deposited > 0{ 
                     println!("increase amount deposit");
 
-                    let amount= amountDeposit.deposited+token_amount;
+                    let amount= amountDeposit.deposited+token_amount_base;
                     amountDeposit.deposited=amount;
 
-                    // amountDeposit.deposited=token_amount;
+                    // amountDeposit.deposited=token_amount_base;
 
                     self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
             }
             else {
-                    let depositedAmount:DepositByUser= DepositByUser {
-                        base_token:launch.base_token,
-                        total_amount:token_amount,
-                        launch_id:launch_id,
-                        owner:sender,
-                        deposited:token_amount,
-                        withdraw_amount:0,
-                        withdrawn:0,
-                        redeemable:0,
-                        refunded:0,
-                        is_canceled:false,
+                    // TODO 
+                    // add oracle or simple data to receive depends on amount 
+                    if !launch.is_base_asset_oracle {
 
-                    };
+                        let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
 
-                    self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+
+                        let depositedAmount:DepositByUser= DepositByUser {
+                            base_asset_token_address:launch.base_asset_token_address,
+                            total_amount:token_amount,
+                            launch_id:launch_id,
+                            owner:sender,
+                            deposited:token_amount_base,
+                            withdraw_amount:0,
+                            withdrawn:0,
+                            redeemable:0,
+                            refunded:0,
+                            is_canceled:false,
+                            remain_token_to_be_claimed:amount_to_receive,
+                            total_token_to_be_claimed:amount_to_receive,
+                        };
+
+                        self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+                    } else {
+                        // TODO add oracle or simple data to receive depends on amount 
+
+                        // Oracle calculation
+                        // Per dollar calculation
+                        let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
+
+                        let depositedAmount:DepositByUser= DepositByUser {
+                            base_asset_token_address:launch.base_asset_token_address,
+                            total_amount:token_amount,
+                            launch_id:launch_id,
+                            owner:sender,
+                            deposited:token_amount_base,
+                            withdraw_amount:0,
+                            withdrawn:0,
+                            redeemable:0,
+                            refunded:0,
+                            is_canceled:false,
+                            remain_token_to_be_claimed:amount_to_receive,
+                            total_token_to_be_claimed:amount_to_receive,
+                        };
+                        self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
+
+
+                    }
+                   
             }
-               
-            // match amountDeposit {
-            //     Option::Some(x) => {
-            //         println!("increase amount deposit");
 
-            //         let amount= amountDeposit.deposited+token_amount;
-            //         amountDeposit.deposited=amount;
-
-            //         // amountDeposit.deposited=token_amount;
-
-            //         self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
-                    
-            //     },
-            //     Option::None => {
-
-            //         let depositedAmount:DepositByUser= DepositByUser {
-            //             base_token:launch.base_token,
-            //             total_amount:token_amount,
-            //             launch_id:launch_id,
-            //             owner:sender,
-            //             deposited:token_amount,
-            //             withdraw_amount:0,
-            //             withdrawn:0,
-            //             redeemable:0,
-            //             refunded:0,
-            //             is_canceled:false,
-
-            //         };
-
-            //         self.depositByUserLaunch.write((sender, launch_id), amountDeposit);
-                    
-            //     },
-            // }
-
+            //  TODO
             // Substract amount remain in sale 
-            launch.remain_balance-=token_amount;
+            // launch.remain_balance-=token_amount;
+            // launch.amounts.deposited+=token_amount;
             self.launchs.write(launch_id, launch);
             self.emit(EventDepositSend {id:launch_id, owner: sender, deposit:amountDeposit.clone()});
             launch_id

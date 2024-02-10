@@ -1,7 +1,12 @@
 import type { GetServerSideProps, NextPage, NextPageContext } from "next";
 import {
   Box,
-  Text
+  Text,
+  Tabs,
+  TabPanels,
+  TabList,
+  Tab,
+  TabPanel,
 } from "@chakra-ui/react";
 import HeaderSEO from "../components/HeaderSEO";
 import CreateSaleForm from "../components/form/launch";
@@ -21,9 +26,18 @@ const Create: NextPage = ({}) => {
         justifyContent={"center"}
         alignItems={"center"}
         textAlign={"center"}
-        py={{base:"2em"}}
+        py={{ base: "2em" }}
       >
-        <CreateSaleForm/>
+        <Tabs>
+          <TabList>
+            <Tab>Launchpad</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>
+              <CreateSaleForm />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </Box>
     </>
   );

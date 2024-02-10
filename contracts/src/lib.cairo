@@ -8,3 +8,7 @@ mod tokens {
 mod launchpad {
     mod launchpad;
 }
+
+mod types {
+    mod launch;
+}

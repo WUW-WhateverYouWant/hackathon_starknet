@@ -3,8 +3,8 @@ version = 1
 
 [[package]]
 name = "openzeppelin"
-version = "0.8.1"
-source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.8.1#eb2d32161e2fe4df54feb08e4dcdd154fa30fd0a"
+version = "1.0.3-rc.10"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v1.0.3-rc.10#33c63fab538a1834277d96dca6a0e9ae84050d11"
 
 [[package]]
 name = "snforge_std"
