@@ -256,8 +256,8 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           form?.token_received_per_one_base,
           form?.cancelable, // Asset
           form?.transferable, // Transferable
-          parseInt(form?.duration_cliff.toString()),
-          parseInt(form?.duration_total.toString()),
+          parseInt(form?.start_date.toString()),
+          parseInt(form?.end_date.toString()),
           form?.soft_cap,
           form?.max_deposit_by_user
           // form?.broker_fee_nb
@@ -306,6 +306,23 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           });
           return;
         }
+
+        console.log("form",form)
+
+        const { isSuccess, message, hash } = await create_launch(
+          accountStarknet?.account,
+          form?.asset, // Asset
+          form?.base_asset_token_address, //Base address liquidity
+          total_amount, // Total amount
+          form?.token_received_per_one_base,
+          form?.cancelable, // Asset
+          form?.transferable, // Transferable
+          parseInt(form?.start_date.toString()),
+          parseInt(form?.end_date.toString()),
+          form?.soft_cap,
+          form?.max_deposit_by_user
+          // form?.broker_fee_nb
+        );
 
         // const { isSuccess, message, hash } = await CREATE_LAUNCH(
         //   accountStarknet?.account,
@@ -495,6 +512,26 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
                   });
                 }}
                 placeholder="Token receive per base token"
+              ></Input>
+
+<Input
+                py={{ base: "0.5em" }}
+                type="number"
+                my={{ base: "0.25em", md: "0.5em" }}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    max_deposit_by_user: cairo.uint256(
+                      parseInt(e?.target?.value)
+                    ),
+                    // broker_fee_nb: Number(e?.target?.value),
+                    // broker: {
+                    //   ...form.broker,
+                    //   fee: Number(e.target.value),
+                    // },
+                  });
+                }}
+                placeholder="Max deposit per user"
               ></Input>
 
               <Box display={{ base: "flex" }} gap={{ base: "5em" }}>

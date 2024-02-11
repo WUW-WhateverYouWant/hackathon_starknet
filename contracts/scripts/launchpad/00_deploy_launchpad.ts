@@ -66,43 +66,36 @@ async function main() {
   // Since we already have the classhash we will be skipping this part
   // Declare the contract
 
-  const ch = hash.computeSierraContractClassHash(compiledSierra);
-  console.log("Class hash calc =", ch);
-  const compCH = hash.computeCompiledClassHash(compiledCasm);
-  console.log("compiled class hash =", compCH);
-  const declareResponse = await account0.declare({
-    contract: compiledSierra,
-    casm: compiledCasm,
-  });
-  const contractClassHash = declareResponse.class_hash;
-  console.log("contractClassHash", contractClassHash)
+  // const ch = hash.computeSierraContractClassHash(compiledSierra);
+  // console.log("Class hash calc =", ch);
+  // const compCH = hash.computeCompiledClassHash(compiledCasm);
+  // console.log("compiled class hash =", compCH);
+  // const declareResponse = await account0.declare({
+  //   contract: compiledSierra,
+  //   casm: compiledCasm,
+  // });
+  // const contractClassHash = declareResponse.class_hash;
+  // console.log("contractClassHash", contractClassHash)
 
-  // Wait for the transaction to be confirmed and log the transaction receipt
-  const txR = await provider.waitForTransaction(
-    declareResponse.transaction_hash
-  );
-  console.log("tx receipt =", txR);
+  // // Wait for the transaction to be confirmed and log the transaction receipt
+  // const txR = await provider.waitForTransaction(
+  //   declareResponse.transaction_hash
+  // );
+  // console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
-  // const contractClassHash =
-  //   "0x6012b224e2dc901c9461cb30d1c3aca01bbf5602ffc1da071c8aa6fa5e3b027";
 
-  // const contractClassHash= CLASS_HASH.LAUNCHPAD
+  const contractClassHash= CLASS_HASH.LAUNCHPAD
 
   console.log("✅ Launchpad Contract declared with classHash =", contractClassHash);
 
   console.log("Deploy of contract in progress...");
-  const name = cairo.felt("TESTOR")
-  const symbol = cairo.felt("TEST")
-  const init_supply= cairo.uint256(1000)
-  console.log("name", name);
-  console.log("symbol", symbol);
   const nonce = await account0.getNonce();
   console.log("accountAddress",accountAddress)
   const { transaction_hash: th2, address } = await account0.deployContract(
     {
       classHash: contractClassHash,
-      constructorCalldata: [ init_supply, accountAddress.toString()],
+      constructorCalldata: [  accountAddress.toString()],
     },
     {nonce:nonce}
   );

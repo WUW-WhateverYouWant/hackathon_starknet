@@ -159,8 +159,6 @@ mod test_launchpad {
             IERC20DispatcherTrait
     };
 
-  
-
     // fn deploy_contract() {
     fn deploy_contract()  {
         let contract = declare('Launchpad');
@@ -170,7 +168,7 @@ mod test_launchpad {
         let name:felt252='TEST_NAME';
         let symbol:felt252='TEST_SYMBOL';
         let sender_felt=ContractAddressIntoFelt252::into(sender);
-        let mut contract_args= array![100, sender_felt ];
+        let mut contract_args= array![sender_felt ];
         Serde::serialize(@sender_felt, ref contract_args);
        
     }

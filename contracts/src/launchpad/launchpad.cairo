@@ -82,7 +82,6 @@ mod Launchpad {
     };
     use array::ArrayTrait;
     use traits::Into;
-    use debug::PrintTrait;
     use zeroable::Zeroable;
 
     // SR5 Component 
@@ -156,12 +155,10 @@ mod Launchpad {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        fixed_supply: u256,
-        recipient: ContractAddress
+        owner: ContractAddress
     ) {
 
-        let owner=get_caller_address();
-
+        // let owner=get_caller_address();
         self.next_launch_id.write(0);
         self.ownable.initializer(owner);
 
@@ -387,8 +384,6 @@ mod Launchpad {
             let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
             // TODO User already deposit 
             if amountDeposit.deposited > 0{ 
-                    println!("increase amount deposit");
-
                     // Calculate token redeemable if oracle or not
                     amountDeposit.deposited+=token_amount_base;
 

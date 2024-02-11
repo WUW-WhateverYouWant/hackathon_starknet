@@ -60,11 +60,9 @@ export async function create_launch(
 
     const calldataCreateWithDuration = CallData.compile({
       asset: asset,
+      base_asset_token_address: base_asset_token_address,
       total_amount: total_amount,
       token_received_per_one_base: token_received_per_one_base,
-      base_asset_token_address: base_asset_token_address,
-      cancelable: cancelable,
-      transferable: transferable,
       start_date: start_date,
       end_date: end_date,
       soft_cap:soft_cap,
@@ -72,7 +70,6 @@ export async function create_launch(
     });
 
     console.log("Execute multicall")
-
     // const nonce= await account.getNonce()
     // console.log("nonce",nonce)
 
@@ -87,7 +84,7 @@ export async function create_launch(
       },
       {
         contractAddress: launchpadContract.address,
-        entrypoint: "CREATE_LAUNCH",
+        entrypoint: "create_launch",
         calldata: calldataCreateWithDuration,
       },
     ],
