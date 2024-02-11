@@ -20,8 +20,9 @@ import { useEffect, useState } from "react";
 import { LaunchCardView, LaunchInterface } from "../../../types";
 import { get_launch_by_id } from "../../../hooks/launch/get_launch_by_id";
 import { LaunchCard } from "../../../layout/sections/launch/LaunchCard";
+import { LaunchPageView } from "../../../layout/sections/launch/LaunchPageView";
 
-const LaunchPage: NextPage = ({ }) => {
+const LaunchPage: NextPage = ({}) => {
   const color = useColorModeValue("gray.900", "gray.300");
   const bg = useColorModeValue("gray.700", "gray.500");
   const {
@@ -30,23 +31,20 @@ const LaunchPage: NextPage = ({ }) => {
     onClose: onCloseConnectModal,
   } = useDisclosure();
 
-  const router = useRouter()
+  const router = useRouter();
 
   const id = router?.query.id as string;
-  const [launchData, setLaunchData] = useState<LaunchInterface | undefined>(
-  );
+  const [launchData, setLaunchData] = useState<LaunchInterface | undefined>();
 
   useEffect(() => {
     if (id && !launchData) {
       const getLaunchData = async () => {
-        const launch= await get_launch_by_id(Number(id));
-        console.log("launch",launch)
-        setLaunchData(launch)
+        const launch = await get_launch_by_id(Number(id));
+        console.log("launch", launch);
+        setLaunchData(launch);
       };
       getLaunchData();
     }
-
-
   }, [id, launchData]);
 
   return (
@@ -117,18 +115,20 @@ const LaunchPage: NextPage = ({ }) => {
               </Box>
             </Box>
 
-            {launchData &&
+            {launchData && (
+              <LaunchPageView
+                launch={launchData}
+                viewType={LaunchCardView.RECIPIENT_VIEW}
+                id={Number(id)}
+              ></LaunchPageView>
+            )}
 
+            {/* {launchData && (
               <LaunchCard
                 launch={launchData}
                 viewType={LaunchCardView.RECIPIENT_VIEW}
-              >
-
-              </LaunchCard>
-            }
-
-
-
+              ></LaunchCard>
+            )} */}
           </Box>
         </Box>
       </Box>

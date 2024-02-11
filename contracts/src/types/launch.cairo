@@ -5,6 +5,7 @@ use starknet::{
 
 #[derive( Drop, Copy, starknet::Store, Serde )]
 struct Launch {
+    launch_id:u64,
     asset:ContractAddress,
     owner: ContractAddress,
     broker: ContractAddress,

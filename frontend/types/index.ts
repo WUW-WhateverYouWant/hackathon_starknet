@@ -78,8 +78,8 @@ export interface CreateRangeProps {
 
 /** Contract interface */
 export interface LaunchInterface {
-  stream_id?: number;
-  sender: string;
+  launch_id?: number;
+  owner: string;
   recipient: string;
   total_amount: number;
   asset: string;

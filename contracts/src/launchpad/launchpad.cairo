@@ -43,6 +43,7 @@ trait ILaunchpad<TContractState> {
    
     // TODO add getters before indexer 
     fn get_launch_by_id(self: @TContractState, launch_id:u64) -> Launch;
+    fn get_all_launchs(self: @TContractState)-> Span<Launch>;
     // fn get_launchs(self: @TContractState) -> Span<Launch>;
 }
 
@@ -186,11 +187,43 @@ mod Launchpad {
 
         }
 
+        /// Views read functions 
         // VIEW 
         fn get_launch_by_id(self:@ContractState, launch_id:u64) -> Launch {
 
             self.launchs.read(launch_id)
         }
+
+        // VIEW get all launchs
+        // TODO add indexer
+        fn get_all_launchs(self:@ContractState) -> Span<Launch> {
+
+            let max_launch_id=self.next_launch_id.read();
+            let mut launchs:Array<Launch> = ArrayTrait::new();
+            let mut i=1;
+            loop {
+
+                if i>= max_launch_id {
+                    break launchs.span();
+                }
+
+                let launch = self.launchs.read(i);
+                launchs.append(launch);
+                i+=1;
+            }
+        }
+
+        // VIEW 
+        // TODO add indexer
+        // fn get_deposit_by_users(self:@ContractState, launch_id:u64) -> Launch {
+
+        //     self.launchs.read(launch_id)
+        // }
+
+
+        // CREATOR POOL
+        // OWNER OF LAUNCHPAD
+
 
         // LAUNCH OWNER
         fn refund_launch(
@@ -234,6 +267,7 @@ mod Launchpad {
             };
 
             let launch:Launch= Launch {
+                launch_id:current_id,
                 total_amount:total_amount,
                 remain_balance:total_amount,
                 start_date:start_date,
@@ -298,6 +332,7 @@ mod Launchpad {
             };
 
             let launch:Launch= Launch {
+                launch_id:current_id,
                 total_amount:total_amount,
                 remain_balance:total_amount,
                 start_date:start_date,

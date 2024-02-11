@@ -1,6 +1,6 @@
-import { Box, Card, Text, Button, CardFooter } from "@chakra-ui/react";
+import { Box, Card, Text, Button, CardFooter, Input } from "@chakra-ui/react";
 import { LaunchInterface, LaunchCardView } from "../../../types";
-import { cairo, shortString, stark, validateAndParseAddress } from "starknet";
+import { Uint256, cairo, shortString, stark, validateAndParseAddress } from "starknet";
 import { feltToAddress, feltToString } from "../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
 import {
@@ -10,8 +10,12 @@ import {
 import { useEffect, useState } from "react";
 import { formatDateTime, formatRelativeTime } from "../../../utils/format";
 import { BiCheck, BiCheckShield } from "react-icons/bi";
-import { ExternalStylizedButtonLink, ExternalTransparentButtonLink } from "../../../components/button/NavItem";
+import {
+  ExternalStylizedButtonLink,
+  ExternalTransparentButtonLink,
+} from "../../../components/button/NavItem";
 import { CONFIG_WEBSITE } from "../../../constants";
+import { buy_token } from "../../../hooks/launch/buy_token";
 
 interface IStreamCard {
   launch?: LaunchInterface;
@@ -29,6 +33,7 @@ export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
+  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(cairo.uint256(0));
   useEffect(() => {
     const updateWithdrawTo = () => {
       if (!withdrawTo && address) {
@@ -38,7 +43,7 @@ export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
     updateWithdrawTo();
   }, [address]);
 
-  const recipientAddress = feltToAddress(BigInt(launch.recipient.toString()));
+  const owner = feltToAddress(BigInt(launch?.owner?.toString()));
   function timeAgo(date: Date): string {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -47,17 +52,16 @@ export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
       return `${diffInSeconds} seconds ago`;
     } else if (diffInSeconds < 3600) {
       const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
     } else if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     } else {
       const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days > 1 ? 's' : ''} ago`;
+      return `${days} day${days > 1 ? "s" : ""} ago`;
     }
   }
-  const senderAddress = feltToAddress(BigInt(launch.sender.toString()));
-  let total_amount = launch?.amounts?.deposited
+  let total_amount = launch?.amounts?.deposited;
   return (
     <>
       <Card
@@ -109,77 +113,103 @@ export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
         )} */}
 
         <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
-        <a href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${recipientAddress}`}>Recipient</a>
+
         <ExternalStylizedButtonLink
-        pb={{base:"0.5em"}}
+          pb={{ base: "0.5em" }}
           textOverflow={"no"}
-
-          href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${recipientAddress}`}>
+          href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${owner}`}
+        >
           {/* <Text>{senderAddress}</Text> */}
-          <Text>Sender explorer</Text>
-
-        </ExternalStylizedButtonLink>
-        <ExternalStylizedButtonLink
-
-          href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${recipientAddress}`}>
-          <Text>Recipient explorer</Text>
-
+          <Text>Owner explorer</Text>
         </ExternalStylizedButtonLink>
 
         <Box>
           <Text>Amount: {Number(total_amount) / 10 ** 18}</Text>
 
-          <Box
-            display={{ base: "flex" }}
-            gap={{ base: "0.5em" }}
-          >
-            {launch?.amounts?.refunded &&
+          <Box display={{ base: "flex" }} gap={{ base: "0.5em" }}>
+            {launch?.amounts?.refunded && (
               <Text>
-                Refunded  {Number(launch.amounts?.refunded) / 10 ** 18}
+                Refunded {Number(launch.amounts?.refunded) / 10 ** 18}
               </Text>
-            }
-            {launch?.amounts?.withdrawn &&
+            )}
+            {launch?.amounts?.withdrawn && (
               <Text>
                 Withdraw {Number(launch.amounts?.withdrawn) / 10 ** 18}
-
               </Text>
-            }
+            )}
           </Box>
-
         </Box>
 
-        <CardFooter
-          textAlign={"left"}
-        >
-          {senderAddress == address && (
+        <CardFooter textAlign={"left"}>
+          <Box>
+            {owner != address && withdrawTo && !launch.was_canceled && (
+              <Box>
+
+               
+              <Input
+                py={{ base: "0.5em" }}
+                type="number"
+                my={{ base: "0.25em", md: "0.5em" }}
+                onChange={(e) => {
+                  setAmountToBuy( cairo.uint256(parseInt(e?.target?.value)))
+                  // setAmountToBuy( parseInt(e?.target?.value))
+                    // broker_fee_nb: Number(e?.target?.value),
+                    // broker: {
+                    //   ...form.broker,
+                    //   fee: Number(e.target.value),
+                    // },
+                  
+                }}
+                placeholder="Max deposit per user"
+              ></Input>
+
+
+                <Button
+                onClick={() =>
+                  buy_token(
+                    account,
+                    launch?.launch_id,
+                    amountToBuy,
+                    launch?.asset
+                  )
+                }
+                >
+                  Buy token 
+                  
+                  
+                </Button>
+              </Box>
+            )}
+          </Box>
+          {owner == address && (
             <Box>
               <Button
-                // onClick={() =>
-                //   cancellaunch(
-                //     account,
-                //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
-                //       .lockupLinearFactory,
-                //     launch?.launch_id
-                //   )
-                // }
+              // onClick={() =>
+              //   cancellaunch(
+              //     account,
+              //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
+              //       .lockupLinearFactory,
+              //     launch?.launch_id
+              //   )
+              // }
               >
                 Cancel
               </Button>
             </Box>
           )}
 
-          {recipientAddress == address && withdrawTo && !launch.was_canceled && (
+          {owner != address && withdrawTo && !launch.was_canceled && (
             <Box>
               <Button
-                // onClick={() =>
-                //   withdraw_max(
-                //     account,
-                //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
-                //       .lockupLinearFactory,
-                //     launch?.launch_id,
-                //     withdrawTo
-                //   )
-                // }
+              // onClick={() =>
+              //   withdraw_max(
+              //     account,
+              //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
+              //       .lockupLinearFactory,
+              //     launch?.launch_id,
+              //     withdrawTo
+              //   )
+              // }
               >
                 Withdraw max
               </Button>
