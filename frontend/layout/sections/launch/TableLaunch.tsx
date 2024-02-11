@@ -9,7 +9,7 @@ import {
   Td,
   Tbody,
 } from "@chakra-ui/react";
-import { LaunchInterface, StreamCardView } from "../../../types";
+import { LaunchInterface, LaunchCardView } from "../../../types";
 import { feltToAddress, feltToString } from "../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
 // import { cancelStream } from "../../hooks/lockup/cancelStream";
@@ -21,18 +21,17 @@ import { formatDateTime, timeAgo } from "../../../utils/format";
 import { MdCancel } from "react-icons/md";
 
 interface IStreamCard {
-  streams?: LaunchInterface[];
-  stream?: LaunchInterface;
-  viewType?: StreamCardView;
+  launchs?: LaunchInterface[];
+  viewType?: LaunchCardView;
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const TableLaunchpad = ({ viewType, streams }: IStreamCard) => {
+export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
   const account = useAccount().account;
   return (
     <Box overflowX={"auto"}>
       <Table overflow={"auto"} overflowX={"auto"}>
-        {viewType == StreamCardView.RECIPIENT_VIEW && (
+        {viewType == LaunchCardView.RECIPIENT_VIEW && (
           <>
             <Thead>
               <Tr>
@@ -47,18 +46,18 @@ export const TableLaunchpad = ({ viewType, streams }: IStreamCard) => {
               </Tr>
             </Thead>
             <Tbody>
-              {streams?.length > 0 &&
-                streams.map((s, i) => {
+              {launchs?.length > 0 &&
+                launchs.map((s, i) => {
                   const sender = feltToAddress(BigInt(s?.sender));
                   const recipient = feltToAddress(BigInt(s?.recipient));
                   const asset = feltToAddress(BigInt(s?.asset));
                   let total_amount = s?.amounts?.deposited;
                   let total_withdraw = s?.amounts?.withdrawn;
                   console.log("s", s);
-                  const startDateBn = Number(s.start_time.toString());
+                  const startDateBn = Number(s.start_date.toString());
                   const startDate = new Date(startDateBn);
 
-                  const endDateBn = Number(s.end_time.toString());
+                  const endDateBn = Number(s.end_date.toString());
                   const endDate = new Date(endDateBn);
 
                   return (
@@ -129,7 +128,7 @@ export const TableLaunchpad = ({ viewType, streams }: IStreamCard) => {
 
           </>
         )}
-        {viewType == StreamCardView.SENDER_VIEW && (
+        {viewType == LaunchCardView.SENDER_VIEW && (
           <>
             <Thead>
               <Tr>
@@ -142,8 +141,8 @@ export const TableLaunchpad = ({ viewType, streams }: IStreamCard) => {
               </Tr>
             </Thead>
             <Tbody>
-              {streams?.length > 0 &&
-                streams.map((s, i) => {
+              {launchs?.length > 0 &&
+                launchs.map((s, i) => {
                   const sender = feltToAddress(BigInt(s?.sender));
                   const recipient = feltToAddress(BigInt(s?.recipient));
                   const asset = feltToAddress(BigInt(s?.asset));

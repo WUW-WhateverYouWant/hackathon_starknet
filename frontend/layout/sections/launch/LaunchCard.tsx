@@ -1,5 +1,5 @@
 import { Box, Card, Text, Button, CardFooter } from "@chakra-ui/react";
-import { LaunchInterface, StreamCardView } from "../../../types";
+import { LaunchInterface, LaunchCardView } from "../../../types";
 import { cairo, shortString, stark, validateAndParseAddress } from "starknet";
 import { feltToAddress, feltToString } from "../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
@@ -14,16 +14,16 @@ import { ExternalStylizedButtonLink, ExternalTransparentButtonLink } from "../..
 import { CONFIG_WEBSITE } from "../../../constants";
 
 interface IStreamCard {
-  stream?: LaunchInterface;
-  viewType?: StreamCardView;
+  launch?: LaunchInterface;
+  viewType?: LaunchCardView;
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
-  const startDateBn = Number(stream.start_time.toString());
+export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
+  const startDateBn = Number(launch.start_date.toString());
   const startDate = new Date(startDateBn);
 
-  const endDateBn = Number(stream.end_time.toString());
+  const endDateBn = Number(launch.end_date.toString());
   const endDate = new Date(endDateBn);
   const account = useAccount().account;
   const address = account?.address;
@@ -38,7 +38,7 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
     updateWithdrawTo();
   }, [address]);
 
-  const recipientAddress = feltToAddress(BigInt(stream.recipient.toString()));
+  const recipientAddress = feltToAddress(BigInt(launch.recipient.toString()));
   function timeAgo(date: Date): string {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -56,8 +56,8 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
       return `${days} day${days > 1 ? 's' : ''} ago`;
     }
   }
-  const senderAddress = feltToAddress(BigInt(stream.sender.toString()));
-  let total_amount = stream?.amounts?.deposited
+  const senderAddress = feltToAddress(BigInt(launch.sender.toString()));
+  let total_amount = launch?.amounts?.deposited
   return (
     <>
       <Card
@@ -82,33 +82,33 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
         <Text>End Date: {timeAgo(endDate)}</Text>
         <Text>End Date: {formatDateTime(endDate)}</Text>
 
-        {stream?.was_canceled && (
+        {launch?.was_canceled && (
           <Box display={"flex"} gap="1em" alignItems={"baseline"}>
             Cancel <BiCheck color="red"></BiCheck>
           </Box>
         )}
 
-        {stream?.is_depleted && (
+        {launch?.is_depleted && (
           <Box display={"flex"} gap="1em" alignItems={"baseline"}>
             Depleted <BiCheckShield></BiCheckShield>
           </Box>
         )}
 
-        {stream?.amounts?.withdrawn && (
+        {launch?.amounts?.withdrawn && (
           <Box display={"flex"} gap="1em" alignItems={"baseline"}>
             Withdraw <BiCheck></BiCheck>
-            <Box>{stream?.amounts?.withdrawn.toString()}</Box>
+            <Box>{launch?.amounts?.withdrawn.toString()}</Box>
           </Box>
         )}
 
-        {stream?.stream_id && (
+        {/* {launch?.id && (
           <Box>
-            Stream id:{" "}
-            {shortString.decodeShortString(stream?.stream_id.toString())}
+            launch id:{" "}
+            {shortString.decodeShortString(launch?.launch_id.toString())}
           </Box>
-        )}
+        )} */}
 
-        <Text>Asset: {feltToAddress(BigInt(stream.asset.toString()))}</Text>
+        <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
         <a href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${recipientAddress}`}>Recipient</a>
         <ExternalStylizedButtonLink
         pb={{base:"0.5em"}}
@@ -133,14 +133,14 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
             display={{ base: "flex" }}
             gap={{ base: "0.5em" }}
           >
-            {stream?.amounts?.refunded &&
+            {launch?.amounts?.refunded &&
               <Text>
-                Refunded  {Number(stream.amounts?.refunded) / 10 ** 18}
+                Refunded  {Number(launch.amounts?.refunded) / 10 ** 18}
               </Text>
             }
-            {stream?.amounts?.withdrawn &&
+            {launch?.amounts?.withdrawn &&
               <Text>
-                Withdraw {Number(stream.amounts?.withdrawn) / 10 ** 18}
+                Withdraw {Number(launch.amounts?.withdrawn) / 10 ** 18}
 
               </Text>
             }
@@ -155,11 +155,11 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
             <Box>
               <Button
                 // onClick={() =>
-                //   cancelStream(
+                //   cancellaunch(
                 //     account,
                 //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
                 //       .lockupLinearFactory,
-                //     stream?.stream_id
+                //     launch?.launch_id
                 //   )
                 // }
               >
@@ -168,7 +168,7 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
             </Box>
           )}
 
-          {recipientAddress == address && withdrawTo && !stream.was_canceled && (
+          {recipientAddress == address && withdrawTo && !launch.was_canceled && (
             <Box>
               <Button
                 // onClick={() =>
@@ -176,7 +176,7 @@ export const LaunchCard = ({ stream, viewType }: IStreamCard) => {
                 //     account,
                 //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
                 //       .lockupLinearFactory,
-                //     stream?.stream_id,
+                //     launch?.launch_id,
                 //     withdrawTo
                 //   )
                 // }

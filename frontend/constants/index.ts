@@ -1,6 +1,6 @@
 export const CONFIG_WEBSITE = {
-  title: "Starknet starter WUW - Whatever you want",
-  description: "Starknet starter WUW - Whatever you want",
+  title: "WUW - Whatever you want",
+  description: "WUW - Whatever you want",
  
   page: {
     portal:"https://portal.wuw-whateveryouwant.xyz",

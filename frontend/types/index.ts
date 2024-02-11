@@ -8,7 +8,7 @@ export enum TypeCreationLaunch {
   CREATE_LAUNCH="CREATE_LAUNCH",
   CREATE_LAUNCH_BASE_TOKEN_ORACLE="CREATE_LAUNCH_BASE_TOKEN_ORACLE",
 }
-export enum StreamCardView  {
+export enum LaunchCardView  {
   SENDER_VIEW="SENDER_VIEW",
   RECIPIENT_VIEW="RECIPIENT_VIEW"
   }
@@ -89,8 +89,10 @@ export interface LaunchInterface {
   transferable: boolean;
   duration_cliff: number;
   duration_total;
-  start_time?: number;
-  end_time?: number;
+  start_date?: number;
+  end_date?: number;
+  // start_time?: number;
+  // end_time?: number;
   range: Range;
   broker: Broker;
   amounts?: LockupAmounts

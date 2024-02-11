@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount } from "@starknet-react/core";
 import { useEffect, useState } from "react";
-import { LaunchInterface, StreamCardView } from "../../../types";
+import { LaunchInterface, LaunchCardView } from "../../../types";
 // import { get_streams_by_sender } from "../../hooks/lockup/get_streams_by_sender";
 import {
   CONTRACT_DEPLOYED_STARKNET,
@@ -37,7 +37,7 @@ export const LaunchViewContainer = () => {
   const account = useAccount().account;
   const [streamsSend, setStreamsSend] = useState<LaunchInterface[]>([]);
 
-  const [streamsReceived, setStreamsReceived] = useState<LaunchInterface[]>([]);
+  const [launchReceived, setLaunchReceived] = useState<LaunchInterface[]>([]);
   const [selectView, setSelectView] = useState<EnumStreamSelector>(
     EnumStreamSelector.SENDER
   );
@@ -111,8 +111,8 @@ export const LaunchViewContainer = () => {
         <TabPanels>
           <TabPanel>
             <RecipientLaunchComponent
-              streamsReceivedProps={streamsReceived}
-              setStreamsReceivedProps={setStreamsReceived}
+              launchsReceivedProps={launchReceived}
+              setLaunchReceivedProps={setLaunchReceived}
               setViewType={setViewType}
               viewType={viewType}
             ></RecipientLaunchComponent>
@@ -132,24 +132,24 @@ export const LaunchViewContainer = () => {
 };
 
 interface IRecipientLaunchComponent {
-  streamsReceivedProps: LaunchInterface[];
-  setStreamsReceivedProps: (lockups: LaunchInterface[]) => void;
+  launchsReceivedProps: LaunchInterface[];
+  setLaunchReceivedProps: (lockups: LaunchInterface[]) => void;
   viewType?: ViewType;
   setViewType: (viewType: ViewType) => void;
 }
 
 const RecipientLaunchComponent = ({
-  streamsReceivedProps,
-  setStreamsReceivedProps,
+  launchsReceivedProps,
+  setLaunchReceivedProps,
   viewType,
   setViewType,
 }: IRecipientLaunchComponent) => {
   const account = useAccount();
-  console.log("streamsReceivedProps", streamsReceivedProps);
+  console.log("launchsReceivedProps", launchsReceivedProps);
   return (
     <Box>
       <Text>Check the launch you can receive here.</Text>
-      <Text>Total: {streamsReceivedProps?.length}</Text>
+      <Text>Total: {launchsReceivedProps?.length}</Text>
       {viewType == ViewType.CARDS && (
         <Box
           // display={"grid"}
@@ -162,14 +162,14 @@ const RecipientLaunchComponent = ({
           }}
           gap={{ base: "0.5em" }}
         >
-          {streamsReceivedProps?.length > 0 &&
-            streamsReceivedProps.map((s, i) => {
+          {launchsReceivedProps?.length > 0 &&
+            launchsReceivedProps.map((l, i) => {
               // if (!s?.was_canceled) {
               return (
                 <LaunchCard
-                  stream={s}
+                  launch={l}
                   key={i}
-                  viewType={StreamCardView.RECIPIENT_VIEW}
+                  viewType={LaunchCardView.RECIPIENT_VIEW}
                 />
               );
               // }
@@ -179,8 +179,8 @@ const RecipientLaunchComponent = ({
 
       {viewType == ViewType.TABS && (
         <TableLaunchpad
-          streams={streamsReceivedProps}
-          viewType={StreamCardView.RECIPIENT_VIEW}
+          launchs={launchsReceivedProps}
+          viewType={LaunchCardView.RECIPIENT_VIEW}
         ></TableLaunchpad>
       )}
     </Box>
@@ -222,9 +222,9 @@ const SenderLaunchComponent = ({
               if (!s?.was_canceled) {
                 return (
                   <LaunchCard
-                    stream={s}
+                    launch={s}
                     key={i}
-                    viewType={StreamCardView.SENDER_VIEW}
+                    viewType={LaunchCardView.SENDER_VIEW}
                   />
                 );
               }
@@ -234,8 +234,8 @@ const SenderLaunchComponent = ({
 
       {viewType == ViewType.TABS && (
         <TableLaunchpad
-          streams={launchSend}
-          viewType={StreamCardView.SENDER_VIEW}
+          launchs={launchSend}
+          viewType={LaunchCardView.SENDER_VIEW}
         ></TableLaunchpad>
       )}
     </Box>

@@ -35,9 +35,9 @@ import { ExternalStylizedButtonLink } from "../../button/NavItem";
 import { VoyagerExplorerImage } from "../../view/VoyagerExplorerImage";
 import { create_launch } from "../../../hooks/launch/create_launch";
 
-interface ICreateSaleForm {}
+interface ICreateSaleForm { }
 
-const CreateLaunchForm = ({}: ICreateSaleForm) => {
+const CreateLaunchForm = ({ }: ICreateSaleForm) => {
   const toast = useToast();
   const accountStarknet = useAccount();
   const network = useNetwork();
@@ -88,7 +88,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
   }, [accountStarknet, account, address]);
 
   /** @TODO refacto */
-  const prepareHandleCreateStream = async (
+  const prepareHandleCreateLaunch = async (
     typeOfCreation: TypeCreationLaunch
   ) => {
     try {
@@ -224,9 +224,24 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           return;
         }
 
+        if (form?.start_date < new Date().getTime()) {
+          toast({
+            title: "Start date is too late. Provide future date",
+            status: "warning",
+          });
+          return;
+        }
+
         if (!form?.end_date) {
           toast({
             title: "Please provide End date",
+            status: "warning",
+          });
+          return;
+        }
+        if (form?.end_date < new Date().getTime()) {
+          toast({
+            title: "End date is too late. Provide future date",
             status: "warning",
           });
           return;
@@ -262,38 +277,53 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           form?.max_deposit_by_user
           // form?.broker_fee_nb
         );
-        // if (hash) {
-        //   setTxHash(hash)
-        //   const tx = await account.waitForTransaction(hash);
-        //   toast({
-        //     title: 'Tx send. Please wait for confirmation',
-        //     description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
-        //     status: "info",
-        //     isClosable: true
+        if (hash) {
+          setTxHash(hash)
+          const tx = await account.waitForTransaction(hash);
+          toast({
+            title: 'Tx send. Please wait for confirmation',
+            description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
+            status: "info",
+            isClosable: true
 
-        //   })
-        //   if (tx?.status) {
-        //     toast({
-        //       title: 'Tx confirmed',
-        //       description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
+          })
+          if (tx?.status) {
+            toast({
+              title: 'Tx confirmed',
+              description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
 
-        //       // description: `Hash: ${hash}`
-        //     })
-        //   }
-        // }
-        // console.log("message", message);
+              // description: `Hash: ${hash}`
+            })
+          }
+        }
+        console.log("message", message);
       } else {
         if (!form?.start_date) {
           toast({
             title: "Provide Start date",
             status: "warning",
           });
-          return {};
+          return;
+        }
+        if (form?.start_date < new Date().getTime()) {
+          toast({
+            title: "Start date is too late. Provide future date",
+            status: "warning",
+          });
+          return;
         }
 
         if (!form?.end_date) {
           toast({
             title: "Please provide End date",
+            status: "warning",
+          });
+          return;
+        }
+
+        if (form?.end_date < new Date().getTime()) {
+          toast({
+            title: "Start date is too late. Provide future date",
             status: "warning",
           });
           return;
@@ -307,7 +337,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           return;
         }
 
-        console.log("form",form)
+        console.log("form", form)
 
         const { isSuccess, message, hash } = await create_launch(
           accountStarknet?.account,
@@ -321,47 +351,29 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           parseInt(form?.end_date.toString()),
           form?.soft_cap,
           form?.max_deposit_by_user
-          // form?.broker_fee_nb
         );
 
-        // const { isSuccess, message, hash } = await CREATE_LAUNCH(
-        //   accountStarknet?.account,
-        //   account?.address, //Sender
-        //   form?.recipient, //Recipient
-        //   total_amount, // Total amount
-        //   form?.asset, // Asset
-        //   form?.cancelable, // Asset
-        //   form?.transferable, // Transferable
-        //   parseInt(form?.range?.start.toString()),
-        //   parseInt(form?.range?.cliff.toString()),
-        //   parseInt(form?.range?.end.toString()),
-        //   form?.broker_account,
-        //   form?.broker_fee
-        // );
+        if (hash) {
+          setTxHash(hash)
+          toast({
+            title: 'Tx send. Please wait for confirmation',
+            description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
+            status: "info",
+            isClosable: true
 
-        // if (hash) {
-        //   setTxHash(hash)
-        //   toast({
-        //     title: 'Tx send. Please wait for confirmation',
-        //     description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
-        //     status: "info",
-        //     isClosable: true
+          })
+          const tx = await account.waitForTransaction(hash);
+          if (tx?.status == TransactionStatus.ACCEPTED_ON_L2) {
 
-        //   })
-        //   const tx = await account.waitForTransaction(hash);
-        //   if (tx?.status == TransactionStatus.ACCEPTED_ON_L2) {
-
-        //     toast({
-        //       title: 'Tx confirmed',
-        //       description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
-
-        //       // description: `Hash: ${hash}`
-        //     })
-        //   }
-        // }
+            toast({
+              title: 'Tx confirmed',
+              description: `${CONFIG_WEBSITE.page.goerli_voyager_explorer}/tx/${hash}`,
+            })
+          }
+        }
       }
     } catch (e) {
-      console.log("prepareHandleCreateStream", e);
+      console.log("prepareCreateLaunch", e);
     }
   };
 
@@ -375,7 +387,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
         Start creating your Launch
       </Text>
 
-      <Text>Select the type of Sale you want to create</Text>
+      <Text>Select the type of Launch you want to create</Text>
       <Box
         py={{ base: "0.25em" }}
         justifyContent={"center"}
@@ -404,11 +416,10 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
       {txHash && (
         <Box py={{ base: "1em" }}>
           <ExternalStylizedButtonLink
-            href={`${
-              CHAINS_NAMES.GOERLI == networkName.toString()
+            href={`${CHAINS_NAMES.GOERLI == networkName.toString()
                 ? CONFIG_WEBSITE.page.goerli_voyager_explorer
                 : CONFIG_WEBSITE.page.voyager_explorer
-            }/tx/${txHash}`}
+              }/tx/${txHash}`}
           >
             <VoyagerExplorerImage></VoyagerExplorerImage>
           </ExternalStylizedButtonLink>
@@ -440,7 +451,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
             }}
           ></Input>
 
-          {TypeCreationLaunch.CREATE_LAUNCH == typeLaunchCreation&& (
+          {TypeCreationLaunch.CREATE_LAUNCH == typeLaunchCreation && (
             <Input
               // my='1em'
               my={{ base: "0.25em", md: "0.5em" }}
@@ -452,7 +463,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
             ></Input>
           )}
 
-          {TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE  == typeLaunchCreation && (
+          {TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE == typeLaunchCreation && (
             <Input
               // my='1em'
               my={{ base: "0.25em", md: "0.5em" }}
@@ -514,7 +525,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
                 placeholder="Token receive per base token"
               ></Input>
 
-<Input
+              <Input
                 py={{ base: "0.5em" }}
                 type="number"
                 my={{ base: "0.25em", md: "0.5em" }}
@@ -628,118 +639,63 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
             p={{ base: "1em" }}
             borderRadius={{ base: "5px" }}
           >
-            {typeLaunchCreation == TypeCreationLaunch.CREATE_LAUNCH && (
-              <Box>
-                <Text
-                  textAlign={"left"}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                >
-                  Start date
-                </Text>
-                <Input
-                  justifyContent={"start"}
-                  w={"100%"}
-                  py={{ base: "0.5em" }}
-                  my={{ base: "0.25em", md: "0.5em" }}
-                  type="datetime-local"
-                  color={useColorModeValue("gray.100", "gray.300")}
-                  _placeholder={{
-                    color: useColorModeValue("gray.100", "gray.300"),
-                  }}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      start_date: new Date(e.target.value).getTime(),
-                    });
-                  }}
-                  placeholder="Start date"
-                ></Input>
+            <Box>
+              <Text
+                textAlign={"left"}
+                color={useColorModeValue("gray.100", "gray.300")}
+              >
+                Start date
+              </Text>
+              <Input
+                justifyContent={"start"}
+                w={"100%"}
+                py={{ base: "0.5em" }}
+                my={{ base: "0.25em", md: "0.5em" }}
+                type="datetime-local"
+                color={useColorModeValue("gray.100", "gray.300")}
+                _placeholder={{
+                  color: useColorModeValue("gray.100", "gray.300"),
+                }}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    start_date: new Date(e.target.value).getTime(),
+                  });
+                }}
+                placeholder="Start date"
+              ></Input>
 
-                <Text
-                  textAlign={"left"}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                >
-                  End date
-                </Text>
-                <Input
-                  py={{ base: "0.5em" }}
-                  type="datetime-local"
-                  my={{ base: "0.25em", md: "0.5em" }}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                  _placeholder={{
-                    color: useColorModeValue("gray.100", "gray.300"),
-                  }}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      end_date: new Date(e.target.value).getTime(),
-                    });
-                  }}
-                  placeholder="End date"
-                ></Input>
-              </Box>
-            )}
-            {typeLaunchCreation ==
-              TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE && (
-              <Box>
-                <FormLabel fontFamily={"monospace"}>
-                  Duration stream type:{" "}
-                </FormLabel>
+              <Text
+                textAlign={"left"}
+                color={useColorModeValue("gray.100", "gray.300")}
+              >
+                End date
+              </Text>
+              <Input
+                py={{ base: "0.5em" }}
+                type="datetime-local"
+                my={{ base: "0.25em", md: "0.5em" }}
+                color={useColorModeValue("gray.100", "gray.300")}
+                _placeholder={{
+                  color: useColorModeValue("gray.100", "gray.300"),
+                }}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    end_date: new Date(e.target.value).getTime(),
+                  });
+                }}
+                placeholder="End date"
+              ></Input>
+            </Box>
 
-                <Text
-                  textAlign={"left"}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                >
-                  Duration cliff
-                </Text>
-                <Input
-                  py={{ base: "0.5em" }}
-                  type="number"
-                  my={{ base: "0.25em", md: "0.5em" }}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                  _placeholder={{
-                    color: useColorModeValue("gray.100", "gray.300"),
-                  }}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      duration_cliff: Number(e?.target?.value),
-                    });
-                  }}
-                  placeholder="Duration cliff"
-                ></Input>
-
-                <Text
-                  textAlign={"left"}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                >
-                  Duration total
-                </Text>
-                <Input
-                  py={{ base: "0.5em" }}
-                  type="number"
-                  my={{ base: "0.25em", md: "0.5em" }}
-                  color={useColorModeValue("gray.100", "gray.300")}
-                  _placeholder={{
-                    color: useColorModeValue("gray.100", "gray.300"),
-                  }}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      duration_total: Number(e?.target?.value),
-                    });
-                  }}
-                  placeholder="Duration total"
-                ></Input>
-              </Box>
-            )}
           </Box>
         </Box>
       </Box>
 
       <Box>
         <Text py={{ base: "0.1em" }} textAlign={{ base: "left" }}>
-          Choose your type of stream to create
+          Choose your type of launch to create
         </Text>
 
         <Box
@@ -748,12 +704,12 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
           gap={{ base: "0.5em" }}
         >
           {typeLaunchCreation ==
-          TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE ? (
+            TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE ? (
             <Button
               bg={useColorModeValue("brand.primary", "brand.primary")}
               disabled={isDisabled}
               onClick={() => {
-                prepareHandleCreateStream(
+                prepareHandleCreateLaunch(
                   TypeCreationLaunch.CREATE_LAUNCH_BASE_TOKEN_ORACLE
                 );
               }}
@@ -765,7 +721,7 @@ const CreateLaunchForm = ({}: ICreateSaleForm) => {
               bg={useColorModeValue("brand.primary", "brand.primary")}
               disabled={isDisabled}
               onClick={() => {
-                prepareHandleCreateStream(TypeCreationLaunch.CREATE_LAUNCH);
+                prepareHandleCreateLaunch(TypeCreationLaunch.CREATE_LAUNCH);
               }}
             >
               Create launch
