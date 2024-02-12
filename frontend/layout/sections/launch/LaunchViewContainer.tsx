@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount } from "@starknet-react/core";
 import { useEffect, useState } from "react";
-import { LaunchInterface, LaunchCardView } from "../../../types";
+import { LaunchInterface, LaunchCardView, DepositByUser } from "../../../types";
 // import { get_streams_by_sender } from "../../hooks/lockup/get_streams_by_sender";
 import {
   CONTRACT_DEPLOYED_STARKNET,
@@ -22,6 +22,9 @@ import { LaunchCard } from "./LaunchCard";
 import { BiCard, BiTable } from "react-icons/bi";
 import { BsCardChecklist, BsCardList } from "react-icons/bs";
 import { TableLaunchpad } from "./TableLaunch";
+import { get_launchs_by_owner } from "../../../hooks/launch/get_launchs_by_owner";
+import { get_all_launchs } from "../../../hooks/launch/get_all_launchs";
+import { get_deposit_by_users } from "../../../hooks/launch/get_deposit_by_users";
 
 enum EnumStreamSelector {
   SENDER = "SENDER",
@@ -35,37 +38,52 @@ enum ViewType {
 /** @TODO getters Cairo contracts, Indexer */
 export const LaunchViewContainer = () => {
   const account = useAccount().account;
-  const [streamsSend, setStreamsSend] = useState<LaunchInterface[]>([]);
+  const [launchs, setLaunchs] = useState<LaunchInterface[]>([]);
+  const [depositsByUser, setDepositsUser] = useState<DepositByUser[]>([]);
 
-  const [launchReceived, setLaunchReceived] = useState<LaunchInterface[]>([]);
+  const [launchsCreated, setLaunchCreated] = useState<LaunchInterface[]>([]);
   const [selectView, setSelectView] = useState<EnumStreamSelector>(
     EnumStreamSelector.SENDER
   );
   const [viewType, setViewType] = useState<ViewType>(ViewType.TABS);
-  console.log("streams state Send", streamsSend);
+  console.log("launchs state Send", launchs);
 
   useEffect(() => {
-    const getStreamsBySender = async () => {
+    const getAllLaunchs = async () => {
       const contractAddress =
         CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
+
+      const launchs = await get_all_launchs();
+
+      setLaunchs(launchs)
     };
 
-    const getStreamsByRecipient = async () => {
+    const getLaunchsByOwner = async () => {
       const contractAddress =
         CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
+
+      const launchsByOwner = await get_launchs_by_owner(account?.address);
+
+      setLaunchCreated(launchsByOwner)
+    };
+
+    const getDepositByOwner = async () => {
+      const contractAddress =
+        CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
+
+      const deposits = await get_deposit_by_users(account?.address);
+
+      setDepositsUser(deposits)
     };
     if (
       account?.address
       // &&  selectView == EnumStreamSelector.SENDER
     ) {
-      getStreamsBySender();
+      getAllLaunchs();
+      getLaunchsByOwner();
+      getDepositByOwner();
     }
-    if (
-      account?.address
-      //  && selectView== EnumStreamSelector.RECIPIENT
-    ) {
-      getStreamsByRecipient();
-    }
+   
   }, [account?.address, account]);
 
   return (
@@ -97,22 +115,31 @@ export const LaunchViewContainer = () => {
             onClick={() => setSelectView(EnumStreamSelector.RECIPIENT)}
             _selected={{ color: "brand.primary" }}
           >
-            As recipient
+            All launchs
           </Tab>
 
           <Tab
             onClick={() => setSelectView(EnumStreamSelector.SENDER)}
             _selected={{ color: "brand.primary" }}
           >
-            As sender
+            Launch created
           </Tab>
         </TabList>
 
         <TabPanels>
           <TabPanel>
             <RecipientLaunchComponent
-              launchsReceivedProps={launchReceived}
-              setLaunchReceivedProps={setLaunchReceived}
+              launchsReceivedProps={launchsCreated}
+              setLaunchReceivedProps={setLaunchCreated}
+              setViewType={setViewType}
+              viewType={viewType}
+            ></RecipientLaunchComponent>
+          </TabPanel>
+
+          <TabPanel>
+            <RecipientLaunchComponent
+              launchsReceivedProps={launchsCreated}
+              setLaunchReceivedProps={setLaunchCreated}
               setViewType={setViewType}
               viewType={viewType}
             ></RecipientLaunchComponent>
@@ -188,14 +215,14 @@ const RecipientLaunchComponent = ({
 };
 
 interface ISenderLaunchComponent {
-  launchSend: LaunchInterface[];
-  setStreamsSend: (lockups: LaunchInterface[]) => void;
+  launchsCreated: LaunchInterface[];
+  setLaunchCreated: (lockups: LaunchInterface[]) => void;
   viewType?: ViewType;
   setViewType: (viewType: ViewType) => void;
 }
 const SenderLaunchComponent = ({
-  launchSend,
-  setStreamsSend,
+  launchsCreated,
+  setLaunchCreated,
   viewType,
   setViewType,
 }: ISenderLaunchComponent) => {
@@ -204,7 +231,7 @@ const SenderLaunchComponent = ({
   return (
     <Box>
       <Text>Find here your stream</Text>
-      <Text>Total: {launchSend?.length}</Text>
+      <Text>Total: {launchsCreated?.length}</Text>
 
       {viewType == ViewType.CARDS && (
         <Box
@@ -215,8 +242,8 @@ const SenderLaunchComponent = ({
           }}
           gap={{ base: "0.5em" }}
         >
-          {launchSend?.length > 0 &&
-            launchSend.map((s, i) => {
+          {launchsCreated?.length > 0 &&
+            launchsCreated.map((s, i) => {
               console.log("s", s);
 
               if (!s?.was_canceled) {
@@ -234,7 +261,7 @@ const SenderLaunchComponent = ({
 
       {viewType == ViewType.TABS && (
         <TableLaunchpad
-          launchs={launchSend}
+          launchs={launchsCreated}
           viewType={LaunchCardView.SENDER_VIEW}
         ></TableLaunchpad>
       )}

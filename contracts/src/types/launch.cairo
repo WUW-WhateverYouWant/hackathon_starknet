@@ -25,12 +25,18 @@ struct Launch {
     max_deposit_by_user:u256,
     is_base_asset_oracle:bool,
 
+    // token_received_per_dollar:u256,
+
     // 0 if not oracle 
     //  otherwise price listing per dollar
     token_per_dollar:u256, 
     
     amounts:AmountLaunch,
-    // balance: felt252,
+
+    // Liquidity params
+    // is_liquidity:bool,
+    // liquidity_percent:u256,
+
 }
 
 #[derive(Drop, Copy, starknet::Store, Serde, PartialEq)]
@@ -96,4 +102,20 @@ struct EventDepositSend {
 struct EventBaseOracleSet {
     asset:ContractAddress,
     is_oracle:bool,
+}
+
+#[derive(Drop, starknet::Event)]
+struct RefundBuyToken {
+    asset_refund:ContractAddress,
+    amount_refund:u256,
+}
+
+#[derive(Drop, starknet::Event)]
+struct PragmaOracleAddressSet {
+    pragma_oracle_address:ContractAddress,
+}
+
+#[derive(Drop, starknet::Event)]
+struct SetJediwapV2Factory {
+    address_jediswap_factory_v2:ContractAddress,
 }

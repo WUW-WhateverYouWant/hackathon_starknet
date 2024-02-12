@@ -100,6 +100,20 @@ export interface LaunchInterface {
 }
 
 
+/** Contract interface */
+export interface DepositByUser {
+  launch_id?: number;
+  owner: string;
+  base_asset_token_address: string;
+  deposited: number;
+  redeemable: string;
+  withdraw_amount: boolean;
+  is_canceled: boolean;
+  was_canceled: boolean;
+  remain_token_to_be_claimed: Uint256;
+  total_token_to_be_claimed: Uint256;
+}
+
 // export interface LockupLinearStreamInterface {
 //   stream_id?: number;
 //   sender: string;

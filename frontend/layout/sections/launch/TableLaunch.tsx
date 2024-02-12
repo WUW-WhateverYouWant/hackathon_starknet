@@ -35,7 +35,7 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
           <>
             <Thead>
               <Tr>
-                <Th>Sender</Th>
+                <Th>Owner</Th>
                 <Th>Actions</Th>
 
                 <Th>Token address</Th>
@@ -48,8 +48,7 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
             <Tbody>
               {launchs?.length > 0 &&
                 launchs.map((s, i) => {
-                  const sender = feltToAddress(BigInt(s?.sender));
-                  const recipient = feltToAddress(BigInt(s?.recipient));
+                  const sender = feltToAddress(BigInt(s?.owner));
                   const asset = feltToAddress(BigInt(s?.asset));
                   let total_amount = s?.amounts?.deposited;
                   let total_withdraw = s?.amounts?.withdrawn;
@@ -107,8 +106,6 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                             `Claimable in : ${timeAgo(endDate)}`
                             :
                             `Can be claim in : ${timeAgo(endDate)}`
-
-
                           }
 
 
@@ -143,7 +140,7 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
             <Tbody>
               {launchs?.length > 0 &&
                 launchs.map((s, i) => {
-                  const sender = feltToAddress(BigInt(s?.sender));
+                  const sender = feltToAddress(BigInt(s?.owner));
                   const recipient = feltToAddress(BigInt(s?.recipient));
                   const asset = feltToAddress(BigInt(s?.asset));
                   let total_amount = s?.amounts?.deposited;
