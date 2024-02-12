@@ -7,15 +7,10 @@ test = "snforge test"
 
 [dependencies]
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.16.0" }
-
-
 starknet = "2.5.3"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.9.0" }
-
 pragma_lib = { git = "https://github.com/astraly-labs/pragma-lib" }
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
-
-
 
 [[target.starknet-contract]]
 sierra = true

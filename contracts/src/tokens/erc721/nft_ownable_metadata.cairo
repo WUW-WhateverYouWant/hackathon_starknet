@@ -65,8 +65,6 @@ mod NftOwnableMetadata {
         name:felt252,
         base_uri:felt252
     ) {
-        let token_id = 1;
-
         self.erc721.initializer(name, symbol);
         self.ownable.initializer(owner);
         self.base_uri.write(base_uri);

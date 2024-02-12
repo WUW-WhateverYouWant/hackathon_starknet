@@ -11,19 +11,18 @@ use starknet::{
     
 };
 
-  fn deploy_setup_erc20(
-        name: felt252, symbol: felt252, initial_supply: u256, recipient: ContractAddress
-    ) -> ContractAddress {
-        let token_contract = declare('ERC20Mintable');
-        let mut calldata = array![name, symbol];
-        Serde::serialize(@initial_supply, ref calldata);
-        Serde::serialize(@recipient, ref calldata);
-        let token_addr = token_contract.deploy(@calldata).unwrap();
-        // let token_dispatcher = ERC20ABI { contract_address: token_addr };
-        token_addr
-        // (token_dispatcher, token_addr)
-    }
-
+fn deploy_setup_erc20(
+    name: felt252, symbol: felt252, initial_supply: u256, recipient: ContractAddress
+) -> ContractAddress {
+    let token_contract = declare('ERC20Mintable');
+    let mut calldata = array![name, symbol];
+    Serde::serialize(@initial_supply, ref calldata);
+    Serde::serialize(@recipient, ref calldata);
+    let token_addr = token_contract.deploy(@calldata).unwrap();
+    // let token_dispatcher = ERC20ABI { contract_address: token_addr };
+    token_addr
+    // (token_dispatcher, token_addr)
+}
 
 fn OWNER() -> ContractAddress {
     contract_address_const::<'OWNER'>()

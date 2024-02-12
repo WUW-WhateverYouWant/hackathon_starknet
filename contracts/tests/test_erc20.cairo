@@ -2,6 +2,20 @@
 
 #[cfg(test)]
 mod test_erc20 {
+ 
+    fn deploy_setup_erc20(
+        name: felt252, symbol: felt252, initial_supply: u256, recipient: ContractAddress
+    ) -> ContractAddress {
+        let token_contract = declare('ERC20Mintable');
+        let mut calldata = array![name, symbol];
+        Serde::serialize(@initial_supply, ref calldata);
+        Serde::serialize(@recipient, ref calldata);
+        let token_addr = token_contract.deploy(@calldata).unwrap();
+        // let token_dispatcher = ERC20ABI { contract_address: token_addr };
+        token_addr
+        // (token_dispatcher, token_addr)
+    }
+
     
     // Math
     fn pow_256(self: u256, mut exponent: u8) -> u256 {
@@ -50,6 +64,28 @@ use starknet::testing;
     };
 
     #[test]
+    #[available_gas(2000000)]
+    fn call_utils() {
+
+        let sender=get_caller_address();
+        let name:felt252='TESTOR';
+        let symbol:felt252='TESTOR STARK SYMBOL';
+        let mint:u256=100;
+        let initial_supply:felt252=100;
+
+        let address:ContractAddress= deploy_setup_erc20(name, symbol, mint, sender);
+
+        start_prank(CheatTarget::One(address), OWNER());
+
+        // assert!(erc20.balance_of(sender)== 0, "balance not 0");
+        // println!("check owner");
+        // assert!(erc20.owner()== OWNER(), "no same owner");
+
+       
+    }
+
+
+    #[test]
     fn call_deploy() {
         // First declare and deploy a contract
         let contract = declare('ERC20Mintable');
@@ -74,7 +110,6 @@ use starknet::testing;
 
             let token_contract = declare('ERC20Mintable');
             let sender=get_caller_address();
-            let recipient = snforge_std::test_address();
             let name:felt252='TEST_NAME';
             let symbol:felt252='TEST_SYMBOL';
             let sender_felt=ContractAddressIntoFelt252::into(OWNER());
@@ -108,8 +143,6 @@ use starknet::testing;
             let symbol:felt252='TEST_SYMBOL';
             let sender_felt=ContractAddressIntoFelt252::into(OWNER());
             let initial_supply:felt252=100;
-            let mint:u256=100;
-
 
             let mut calldata = array![name, symbol, sender_felt, initial_supply];
             Serde::serialize(@initial_supply, ref calldata);

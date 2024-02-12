@@ -9,14 +9,17 @@ mod ERC20Token {
     impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
     #[abi(embed_v0)]
     impl ERC20MetadataImpl = ERC20Component::ERC20MetadataImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl SafeAllowanceImpl = ERC20Component::SafeAllowanceImpl<ContractState>;
+  
     #[abi(embed_v0)]
     impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl SafeAllowanceCamelImpl =
-        ERC20Component::SafeAllowanceCamelImpl<ContractState>;
+
     impl InternalImpl = ERC20Component::InternalImpl<ContractState>;
+
+    // #[abi(embed_v0)]
+    // impl SafeAllowanceImpl = ERC20Component::SafeAllowanceImpl<ContractState>;
+    //     #[abi(embed_v0)]
+    // impl SafeAllowanceCamelImpl =
+    //     ERC20Component::SafeAllowanceCamelImpl<ContractState>;
 
     #[storage]
     struct Storage {

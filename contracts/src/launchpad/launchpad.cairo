@@ -58,7 +58,10 @@ trait ILaunchpad<TContractState> {
 
 #[starknet::contract]
 mod Launchpad {
-    // use super::Launch;
+
+    use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait};
+    use pragma_lib::types::{AggregationMode, DataType, PragmaPricesResponse};
+
     use wuw_contracts::types::launch:: {
         Launch, AmountLaunch,
         DepositByUser,
@@ -72,7 +75,15 @@ mod Launchpad {
         SetJediwapV2Factory
     };
 
+    use wuw_contracts::interfaces::erc20::{
+      IERC20Dispatcher,
+      IERC20DispatcherTrait
+    };
 
+    use wuw_contracts::interfaces::jediswap:: {
+       IJediswapFactoryV2,
+       IJediswapNFTRouterV2
+    };
 
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -89,10 +100,7 @@ mod Launchpad {
     use openzeppelin::token::erc20::dual20::{
          DualCaseERC20,
     };
-    use wuw_contracts::interfaces::erc20::{
-      IERC20Dispatcher,
-      IERC20DispatcherTrait
-    };
+    
     use array::ArrayTrait;
     use traits::Into;
     use zeroable::Zeroable;
@@ -173,6 +181,7 @@ mod Launchpad {
         base_protocol_fee_launch_creation:u8,
         amount_paid_dollar_launch:u256,
         is_paid_dollar_launch:bool,
+        is_tokens_address_paid_launch_enable:LegacyMap::<ContractAddress, bool>,
         
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -198,12 +207,29 @@ mod Launchpad {
         self.accesscontrol.initializer();
         self.accesscontrol._grant_role(ADMIN_ROLE, owner);
         self.accesscontrol._grant_role(OWNER_ROLE, owner);
+
+        // Init admin 
+        // self.is_paid_dollar_launch=true;
     }
 
 
     // TODO implement internal functions and refacto
     #[generate_trait]
     impl LaunchpadInternalImpl of LaunchpadInternalTrait {
+
+        // Owner cancel launch and receive their tokens back
+        fn add_liquidity(
+            ref self:ContractState,
+            token_a:ContractAddress,
+            token_b:ContractAddress
+        ){
+
+
+            let contract_address=get_contract_address();
+            let sender=get_caller_address();
+
+        }
+
 
     }
 
@@ -235,71 +261,7 @@ mod Launchpad {
             // self.own_pragma_oracle_address.write(pragma_oracle_address);
             self.emit(PragmaOracleAddressSet{ pragma_oracle_address:pragma_oracle_address});
         }
-        /// Views read functions 
-        // VIEW 
-        fn get_launch_by_id(self:@ContractState, launch_id:u64) -> Launch {
-
-            self.launchs.read(launch_id)
-        }
-
-        // VIEW get all launchs
-        // TODO add indexer and fix loop
-        fn get_all_launchs(self:@ContractState) -> Span<Launch> {
-
-            let max_launch_id=self.next_launch_id.read();
-            let mut launchs:Array<Launch> = ArrayTrait::new();
-            let mut i=1;
-            loop {
-
-                if i>= max_launch_id {
-                    break launchs.span();
-                }
-
-                let launch = self.launchs.read(i);
-                launchs.append(launch);
-                i+=1;
-            }
-        }
-
-        fn get_launchs_by_owner(self:@ContractState, owner:ContractAddress) -> Span<Launch> {
-
-            let max_launch_id=self.next_launch_id.read();
-            let mut launchs:Array<Launch> = ArrayTrait::new();
-            let mut i=1;
-            loop {
-
-                if i>= max_launch_id {
-                    break launchs.span();
-                }
-
-                let launch = self.launchs.read(i);
-                if launch.owner == owner {
-                    launchs.append(launch);
-                }
-                i+=1;
-            }
-        }
-
-        // VIEW 
-        // TODO add indexer and fix big loop
-        fn get_deposit_by_users(self:@ContractState, address:ContractAddress) -> Span<DepositByUser> {
-            let max_launch_id=self.next_launch_id.read();
-
-            let mut deposits:Array<DepositByUser> = ArrayTrait::new();
-            let deposit_user_by_launch=self.deposit_user_by_launch.read((address,0));
-            let mut i = 1;
-            loop {
-
-                if i>= max_launch_id {
-                    break deposits.span();
-                }
-
-                let deposit = self.deposit_user_by_launch.read((address, i));
-                deposits.append(deposit);
-                i+=1;
-            }
-        }
-
+     
 
         // CREATOR POOL
         // OWNER OF LAUNCHPAD
@@ -337,6 +299,12 @@ mod Launchpad {
                 total_token_to_be_claimed:total_amount,
                 remain_token_to_be_claimed:total_amount,
             };
+
+            // Add paid dollar by token set
+
+            if self.is_paid_dollar_launch.read() {
+
+            }
 
             let launch:Launch= Launch {
                 launch_id:current_id,
@@ -463,6 +431,8 @@ mod Launchpad {
         }
 
         
+
+        
         // TODO Finish
         // REFUND OWNER
         fn refund_launch(
@@ -555,8 +525,7 @@ mod Launchpad {
             IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
 
             // TODO oracle calculation ETH
-            let token_amount=1;
-            let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
+            let mut amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
             // TODO User already deposit 
             if amount_deposit.deposited > 0{ 
                     // Calculate token redeemable if oracle or not
@@ -564,7 +533,8 @@ mod Launchpad {
 
                     if !launch.is_base_asset_oracle {
 
-                        let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
+                        // let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
+                        amount_to_receive=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
                         amount_deposit.total_token_to_be_claimed=amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed=amount_to_claim;
@@ -590,7 +560,7 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
 
                         let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
-                        let depositedAmount:DepositByUser= DepositByUser {
+                        let deposited_amount:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,
@@ -605,7 +575,7 @@ mod Launchpad {
                             total_token_to_be_claimed:amount_to_receive,
                         };
 
-                        self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
+                        self.deposit_user_by_launch.write((sender, launch_id), deposited_amount);
                     } else {
                         // TODO add oracle or simple data to receive depends on amount 
 
@@ -613,7 +583,7 @@ mod Launchpad {
                         // Per dollar calculation
                         let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
 
-                        let depositedAmount:DepositByUser= DepositByUser {
+                        let deposited_amount_oracle:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,
@@ -627,7 +597,7 @@ mod Launchpad {
                             remain_token_to_be_claimed:amount_to_receive,
                             total_token_to_be_claimed:amount_to_receive,
                         };
-                        self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
+                        self.deposit_user_by_launch.write((sender, launch_id), deposited_amount_oracle);
 
 
                     }
@@ -685,6 +655,73 @@ mod Launchpad {
 
             launch_id
         }
+
+
+           /// Views read functions 
+        // VIEW 
+        fn get_launch_by_id(self:@ContractState, launch_id:u64) -> Launch {
+
+            self.launchs.read(launch_id)
+        }
+
+        // VIEW get all launchs
+        // TODO add indexer and fix loop
+        fn get_all_launchs(self:@ContractState) -> Span<Launch> {
+
+            let max_launch_id=self.next_launch_id.read();
+            let mut launchs:Array<Launch> = ArrayTrait::new();
+            let mut i=1;
+            loop {
+
+                if i>= max_launch_id {
+                    break launchs.span();
+                }
+
+                let launch = self.launchs.read(i);
+                launchs.append(launch);
+                i+=1;
+            }
+        }
+
+        fn get_launchs_by_owner(self:@ContractState, owner:ContractAddress) -> Span<Launch> {
+
+            let max_launch_id=self.next_launch_id.read();
+            let mut launchs:Array<Launch> = ArrayTrait::new();
+            let mut i=1;
+            loop {
+
+                if i>= max_launch_id {
+                    break launchs.span();
+                }
+
+                let launch = self.launchs.read(i);
+                if launch.owner == owner {
+                    launchs.append(launch);
+                }
+                i+=1;
+            }
+        }
+
+        // VIEW 
+        // TODO add indexer and fix big loop
+        fn get_deposit_by_users(self:@ContractState, address:ContractAddress) -> Span<DepositByUser> {
+            let max_launch_id=self.next_launch_id.read();
+
+            let mut deposits:Array<DepositByUser> = ArrayTrait::new();
+            // let deposit_user_by_launch=self.deposit_user_by_launch.read((address,0));
+            let mut i = 1;
+            loop {
+
+                if i>= max_launch_id {
+                    break deposits.span();
+                }
+
+                let deposit = self.deposit_user_by_launch.read((address, i));
+                deposits.append(deposit);
+                i+=1;
+            }
+        }
+
 
 
     }
