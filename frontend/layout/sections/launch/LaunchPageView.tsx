@@ -201,7 +201,7 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
             {owner == address && (
               <Box>
                 <Button
-                  onClick={() => cancel_launch(account, launch?.launch_id)}
+                  onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
                 >
                   Cancel
                 </Button>

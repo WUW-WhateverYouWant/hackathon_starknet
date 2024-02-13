@@ -159,24 +159,50 @@ mod test_launchpad {
             IERC20DispatcherTrait
     };
 
-    // fn deploy_contract() {
-    fn deploy_contract()  {
-        let contract = declare('Launchpad');
-        // Alternatively we could use `deploy_syscall` here
-
+    fn deploy_setup_erc20(
+        // name: felt252, symbol: felt252, initial_supply: u256, recipient: ContractAddress
+    ) -> ContractAddress {
+        let token_contract = declare('ERC20Mintable');
         let sender=get_caller_address();
         let name:felt252='TEST_NAME';
         let symbol:felt252='TEST_SYMBOL';
-        let sender_felt=ContractAddressIntoFelt252::into(sender);
-        let mut contract_args= array![sender_felt ];
-        Serde::serialize(@sender_felt, ref contract_args);
-       
+        let sender_felt=ContractAddressIntoFelt252::into(OWNER());
+        let initial_supply:felt252=100;
+
+        let mut contract_args = array![name, symbol, sender_felt, initial_supply];
+        // Serde::serialize(@sender_felt, ref contract_args);
+        Serde::serialize(@initial_supply, ref contract_args);
+
+        let token_addr = token_contract.deploy(@contract_args).unwrap();
+        let erc20=IERC20Dispatcher {contract_address:token_addr};
+        token_addr
     }
 
-     #[test]
+
+    fn deploy_launchpad(
+        sender: ContractAddress
+    ) -> ContractAddress {
+        let token_contract = declare('Launchpad');
+        let sender_felt=ContractAddressIntoFelt252::into(sender);
+        let mut calldata = array![sender_felt];
+
+        // let mut calldata = array![sender_felt];
+        // Serde::serialize(@sender_felt, ref calldata);
+        let token_addr = token_contract.deploy(@calldata).unwrap();
+        token_addr
+    }
+
+    fn deploy_contract()  {
+    }
+
+    #[test]
     fn deploy() {
         // First declare and deploy a contract
-        deploy_contract();
+        let sender=get_caller_address();
+        let address= deploy_launchpad(sender);
+
+
+        let erc20_address=deploy_setup_erc20();
     }
 
 

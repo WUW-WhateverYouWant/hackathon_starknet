@@ -119,3 +119,15 @@ struct PragmaOracleAddressSet {
 struct SetJediwapV2Factory {
     address_jediswap_factory_v2:ContractAddress,
 }
+
+#[derive(Drop, starknet::Event)]
+struct SetIsPaidDollarLaunch {
+    is_paid_dollar_launch:bool,
+}
+
+
+#[derive(Drop, starknet::Event)]
+struct SetAddressTokenToPayLaunch {
+    address_token_to_pay_launch:ContractAddress,
+}
+

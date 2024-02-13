@@ -117,7 +117,6 @@ use starknet::testing;
 
             let mut contract_args = array![name, symbol, sender_felt, initial_supply];
              Serde::serialize(@initial_supply, ref contract_args);
-        // Serde::serialize(@recipient , ref contract_args);
 
             let token_addr = token_contract.deploy(@contract_args).unwrap();
             let erc20=IERC20Dispatcher {contract_address:token_addr};

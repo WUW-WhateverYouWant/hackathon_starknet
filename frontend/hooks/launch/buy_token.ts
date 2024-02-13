@@ -41,7 +41,9 @@ export async function buy_token(
     console.log("launch_id",launch_id)
     console.log("token_amount_base",token_amount_base)
     console.log("asset",asset)
+    // const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
     const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
+
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,
@@ -65,15 +67,15 @@ export async function buy_token(
         contractAddress: erc20Contract.address,
         entrypoint: "approve",
         calldata: CallData.compile({
-          recipient: launchpadContract.address,
+          recipient: asset,
           amount: token_amount_base,
         }),
       },
-      {
-        contractAddress: launchpadContract.address,
-        entrypoint: "buy_token",
-        calldata: calldataCreateWithDuration,
-      },
+      // {
+      //   contractAddress: launchpadContract.address,
+      //   entrypoint: "buy_token",
+      //   calldata: calldataCreateWithDuration,
+      // },
     ],
     undefined,
     //  [ERC20WUW.abi, LaunchpadAbi],

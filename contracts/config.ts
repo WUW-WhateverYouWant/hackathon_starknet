@@ -1,3 +1,13 @@
+export const CHAIN_ID = {
+    SN_SEPOLIA:"0x534e5f5345504f4c4941",
+    SN_GOERLI:"0x534e5f474f45524c49",
+    SN_MAIN:"0x534e5f4d41494e"
+}
+
+export const TOKENS_ADDRESS = {
+    ETH:"0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7"
+}
+
 export const CONFIG_ADDRESS = {
     GOERLI_NFT:"0x4a0ddc47eb683949cda63c2b2e66e82dc5e39a023d522ab9906fb871dade5b1",
     NFT_2:"0x1d596e436a23d6db40c9e56bf62cdc7569ad9fb3e8c7504fff79c2aba387ee3",
@@ -32,3 +42,6 @@ export const PINATA_URL = {
     tokenBaseURIUnrevelead:
       "https://gateway.pinata.cloud/ipfs/bafkreifvfov4awv233e2dvaa4akjqdhkjanuqkplyoxssz2a2xnmuamrce",
   };
+
+
+

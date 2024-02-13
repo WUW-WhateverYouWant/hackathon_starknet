@@ -45,6 +45,17 @@ trait ILaunchpad<TContractState> {
     fn set_oracle_base_asset(ref self:TContractState,asset_address:ContractAddress, is_oracle:bool);
     fn set_pragma_address(ref self:TContractState,pragma_oracle_address:ContractAddress);
     fn set_address_jediswap_factory_v2(ref self:TContractState, address_jediswap_factory_v2:ContractAddress);
+    fn set_is_paid_dollar_launch(ref self:TContractState, is_paid_dollar_launch:bool);
+    fn set_address_token_to_pay_launch(ref self:TContractState, address_token_to_pay_launch:ContractAddress);
+    fn set_amount_paid_dollar_launch(ref self:TContractState, amount_paid_dollar_launch:u256);
+    fn set_token_selector(ref self:TContractState, address:ContractAddress, selector:felt252);
+    // fn set_params_fees(
+    //     ref self:TContractState, 
+    //     is_paid_dollar_launch:bool,
+    //     address:ContractAddress, 
+    //     amount_paid_dollar_launch:u256,
+    //     selector:felt252
+    // );
    
     // Views
     // TODO add getters before indexer 
@@ -52,7 +63,11 @@ trait ILaunchpad<TContractState> {
     fn get_all_launchs(self: @TContractState)-> Span<Launch>;
     fn get_launchs_by_owner(self: @TContractState, owner:ContractAddress)-> Span<Launch>;
     fn get_deposit_by_users(self: @TContractState, address:ContractAddress)-> Span<DepositByUser>;
-    // fn get_launchs(self: @TContractState) -> Span<Launch>;
+    fn get_is_dollar_paid_launch(self: @TContractState)-> bool;
+    fn get_address_token_to_pay_launch(self:@TContractState) -> ContractAddress;
+    fn get_amount_paid_dollar_launch(self:@TContractState) -> u256;
+    fn get_amount_token_to_pay_launch(self:@TContractState) -> u256;
+
 
 }
 
@@ -72,7 +87,9 @@ mod Launchpad {
         EventBaseOracleSet,
         RefundBuyToken,
         PragmaOracleAddressSet,
-        SetJediwapV2Factory
+        SetJediwapV2Factory,
+        SetIsPaidDollarLaunch,
+        SetAddressTokenToPayLaunch
     };
 
     use wuw_contracts::interfaces::erc20::{
@@ -140,12 +157,6 @@ mod Launchpad {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        LaunchCreated: LaunchCreated,
-        EventDepositSend: EventDepositSend,
-        EventBaseOracleSet:EventBaseOracleSet,
-        RefundBuyToken:RefundBuyToken,
-        PragmaOracleAddressSet:PragmaOracleAddressSet,
-        SetJediwapV2Factory:SetJediwapV2Factory,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -153,6 +164,16 @@ mod Launchpad {
 
         #[flat]
         SRC5Event: SRC5Component::Event,
+
+        LaunchCreated: LaunchCreated,
+        EventDepositSend: EventDepositSend,
+        EventBaseOracleSet:EventBaseOracleSet,
+        RefundBuyToken:RefundBuyToken,
+        PragmaOracleAddressSet:PragmaOracleAddressSet,
+        SetJediwapV2Factory:SetJediwapV2Factory,
+        SetIsPaidDollarLaunch:SetIsPaidDollarLaunch,
+        SetAddressTokenToPayLaunch:SetAddressTokenToPayLaunch,
+     
     }
 
     #[storage]
@@ -165,10 +186,10 @@ mod Launchpad {
         deposit_user_by_launch: LegacyMap::<(ContractAddress, u64), DepositByUser>,
 
         // Admin
-        tokensBlacklistedForBuy:LegacyMap::<ContractAddress, bool>,
-        tokensBoosted:LegacyMap::<ContractAddress, bool>,
+        tokens_blacklisted_for_buy:LegacyMap::<ContractAddress, bool>,
+        tokens_boosted:LegacyMap::<ContractAddress, bool>,
         is_assets_base_oracle:LegacyMap::<ContractAddress, bool>,
-        tokensLaunchIds:LegacyMap::<ContractAddress, u64>,
+        tokens_launch_ids:LegacyMap::<ContractAddress, u64>,
 
         // Management external contracts
         pragma_oracle_address:ContractAddress,
@@ -181,7 +202,10 @@ mod Launchpad {
         base_protocol_fee_launch_creation:u8,
         amount_paid_dollar_launch:u256,
         is_paid_dollar_launch:bool,
+        address_token_to_pay_launch:ContractAddress,
         is_tokens_address_paid_launch_enable:LegacyMap::<ContractAddress, bool>,
+        tokens_oracle_pair_market_dollar:LegacyMap::<ContractAddress, felt252>,
+        tokens_selectors:LegacyMap::<ContractAddress, felt252>,
         
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -209,7 +233,7 @@ mod Launchpad {
         self.accesscontrol._grant_role(OWNER_ROLE, owner);
 
         // Init admin 
-        // self.is_paid_dollar_launch=true;
+        // self.is_paid_dollar_launch.write(true);
     }
 
 
@@ -218,16 +242,25 @@ mod Launchpad {
     impl LaunchpadInternalImpl of LaunchpadInternalTrait {
 
         // Owner cancel launch and receive their tokens back
-        fn add_liquidity(
+        fn _add_liquidity(
             ref self:ContractState,
             token_a:ContractAddress,
             token_b:ContractAddress
         ){
 
-
             let contract_address=get_contract_address();
             let sender=get_caller_address();
 
+        }
+
+        fn _get_asset_price_average(self: @ContractState, key:felt252 ) ->  u128 {
+
+            let oracle_address=self.pragma_oracle_address.read();
+            let oracle_dispatcher = IPragmaABIDispatcher{contract_address : oracle_address};
+
+            let asset=DataType::SpotEntry(key);
+            let output : PragmaPricesResponse= oracle_dispatcher.get_data(asset, AggregationMode::Mean(()));
+            return output.price;
         }
 
 
@@ -261,7 +294,34 @@ mod Launchpad {
             // self.own_pragma_oracle_address.write(pragma_oracle_address);
             self.emit(PragmaOracleAddressSet{ pragma_oracle_address:pragma_oracle_address});
         }
-     
+
+        // Token to paid when create launch
+        fn set_address_token_to_pay_launch(ref self: ContractState, address_token_to_pay_launch:ContractAddress) {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.address_token_to_pay_launch.write(address_token_to_pay_launch);
+            self.emit(SetAddressTokenToPayLaunch{ address_token_to_pay_launch:address_token_to_pay_launch});
+        }
+
+        // Set paid dollar launch 
+        // Need to have a token for paid it
+        fn set_is_paid_dollar_launch(ref self:ContractState, is_paid_dollar_launch:bool) {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.is_paid_dollar_launch.write(is_paid_dollar_launch);
+            self.emit(SetIsPaidDollarLaunch{ is_paid_dollar_launch:is_paid_dollar_launch});
+        }
+
+        fn set_amount_paid_dollar_launch(ref self:ContractState, amount_paid_dollar_launch:u256) {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.amount_paid_dollar_launch.write(amount_paid_dollar_launch);
+           
+        }
+
+        fn set_token_selector(ref self:ContractState, address:ContractAddress, selector:felt252) {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.tokens_selectors.write(address, selector);
+        }
+
+   
 
         // CREATOR POOL
         // OWNER OF LAUNCHPAD
@@ -282,8 +342,8 @@ mod Launchpad {
 
             // TODO check date
             let timestamp=get_block_timestamp();
-            assert!(timestamp<start_date);
-            assert!(timestamp<end_date);
+            assert!(timestamp<start_date, "time < start_date");
+            assert!(timestamp<end_date, "time < end_date");
             assert!(start_date<end_date, "start > end");
 
             let contract_address=get_contract_address();
@@ -301,8 +361,17 @@ mod Launchpad {
             };
 
             // Add paid dollar by token set
-
+            // TODO paid dollar by token dollar
             if self.is_paid_dollar_launch.read() {
+
+                let token_address= self.address_token_to_pay_launch.read();
+                // let selector_of_token=self.market_felt_by_asset.read(token_address);
+                // let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
+                // let price:u256=price_128.into();
+                // let dollar_to_pay=self.amount_paid_dollar_launch.read();
+                // let token_to_pay=dollar_to_pay/price;
+                let token_to_pay=self.get_amount_token_to_pay_launch();
+                IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract_address, token_to_pay);
 
             }
 
@@ -350,11 +419,11 @@ mod Launchpad {
         ) -> u64 {
 
             // Verify base token 
-            assert!(self.is_assets_base_oracle.read(asset) == true, "not base oracle token");
+            assert!(self.is_assets_base_oracle.read(asset) == true, "not oracle token");
             // TODO check date
             let timestamp=get_block_timestamp();
-            assert!(timestamp<start_date);
-            assert!(timestamp<end_date, "enddate too early");
+            assert!(timestamp<start_date, "time < start_date");
+            assert!(timestamp<end_date, "end_date too early");
             assert!(start_date<end_date, "start > end");
 
             let contract_address=get_contract_address();
@@ -370,6 +439,18 @@ mod Launchpad {
                 total_token_to_be_claimed:total_amount,
                 remain_token_to_be_claimed:total_amount,
             };
+
+            // if self.is_paid_dollar_launch.read() {
+
+            //     let token_address= self.address_token_to_pay_launch.write();
+            //     let selector_of_token=self.market_felt_by_asset.read(token_address);
+            //     let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
+            //     let price:u256=price_128.into();
+            //     let dollar_to_pay=self.amount_paid_dollar_launch.write();
+            //     let token_to_pay=dollar_to_pay/price;
+            //     IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract, token_to_pay);
+
+            // }
 
             let launch:Launch= Launch {
                 launch_id:current_id,
@@ -406,7 +487,6 @@ mod Launchpad {
             launch_id:u64
         )-> u64 {
 
-
             let contract_address=get_contract_address();
             let sender=get_caller_address();
 
@@ -417,7 +497,7 @@ mod Launchpad {
 
             // Check timestamp
             let timestamp=get_block_timestamp();
-            assert!(timestamp<launch.end_date);
+            assert!(timestamp<launch.end_date, "time < end_date");
 
 
             // Token back to owner
@@ -449,7 +529,7 @@ mod Launchpad {
             let contract_address=get_contract_address();
             let timestamp= get_block_timestamp();
 
-            assert!(timestamp<launch.end_date);
+            assert!(timestamp<launch.end_date, "time < end_date");
 
             IERC20Dispatcher { contract_address: launch.asset}.transfer_from(contract_address, sender, launch.total_amount );
             // Update
@@ -474,7 +554,7 @@ mod Launchpad {
             let timestamp=get_block_timestamp();
             let sender= get_caller_address();
             let contract_address=get_contract_address();
-            assert!(timestamp<launch.end_date);
+            assert!(timestamp<launch.end_date,"time < end_date");
 
             let mut amount_deposit_by_user = self.deposit_user_by_launch.read((sender, launch_id));
 
@@ -508,47 +588,75 @@ mod Launchpad {
             let mut launch = self.launchs.read(launch_id);
             // Check date 
             let timestamp=get_block_timestamp();
-            assert!(timestamp<launch.end_date);
+            assert!(timestamp<launch.end_date, "time < end_date");
 
             // Check is cancel 
             assert!(!launch.is_canceled, "launch cancel");
 
 
-            // Check amount
-            assert!(token_amount_base<=launch.remain_balance);
             // Add amount users
 
             // Check if amount already exist : create or increase 
 
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
             let base_asset_token_address= amount_deposit.base_asset_token_address;
-            IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
+
+            // Check amount
 
             // TODO oracle calculation ETH
             let mut amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
+
+            
+            // hard_cap
+            // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
+
+            let mut token_amount_to_receive=token_amount_base*launch.token_received_per_one_base;
+
+            if launch.is_base_asset_oracle {
+
+
+            } else {
+
+            }
             // TODO User already deposit 
             if amount_deposit.deposited > 0{ 
                     // Calculate token redeemable if oracle or not
                     amount_deposit.deposited+=token_amount_base;
 
                     if !launch.is_base_asset_oracle {
+                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
 
                         // let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         amount_to_receive=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
                         amount_deposit.total_token_to_be_claimed=amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed=amount_to_claim;
+                        amount_deposit.redeemable+=amount_to_receive;
                         self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
                         
                     } else {
 
                         // TODO better verification for oracle
                         // TODO token usd 
+                        
+                        let selector_of_token=self.market_felt_by_asset.read(launch.asset);
+                        // let price = get_asset_price_average(selector_of_token);
+                        let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
+                        let price:u256=price_128.into();
+                        let dollar_price_position= price*token_amount_base;
+                        let token_to_receive=launch.token_per_dollar*dollar_price_position;
+                        amount_to_receive=token_to_receive;
 
-                        let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
-                        let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
-                        amount_deposit.total_token_to_be_claimed=amount_to_receive;
-                        amount_deposit.remain_token_to_be_claimed=amount_to_claim;
+                        // token_amount_to_receive=amount_to_receive;
+                        assert!(amount_to_receive<=launch.remain_balance, "> remain_balance");
+
+                        // let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
+                        // let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
+                        
+                        amount_deposit.total_token_to_be_claimed+=amount_to_receive;
+                        amount_deposit.remain_token_to_be_claimed+=amount_to_receive;
+                        amount_deposit.redeemable+=amount_to_receive;
+
                         self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 
                     }
@@ -559,7 +667,8 @@ mod Launchpad {
                     // add oracle or simple data to receive depends on amount 
                     if !launch.is_base_asset_oracle {
 
-                        let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
+                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+
                         let deposited_amount:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
                             total_amount:token_amount_base,
@@ -568,7 +677,7 @@ mod Launchpad {
                             deposited:token_amount_base,
                             withdraw_amount:0,
                             withdrawn:0,
-                            redeemable:0,
+                            redeemable:amount_to_receive,
                             refunded:0,
                             is_canceled:false,
                             remain_token_to_be_claimed:amount_to_receive,
@@ -576,12 +685,24 @@ mod Launchpad {
                         };
 
                         self.deposit_user_by_launch.write((sender, launch_id), deposited_amount);
+
                     } else {
                         // TODO add oracle or simple data to receive depends on amount 
 
                         // Oracle calculation
                         // Per dollar calculation
-                        let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
+
+                        // let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
+                        
+                        let selector_of_token=self.market_felt_by_asset.read(launch.asset);
+                        let price_u128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
+                        let price:u256=price_u128.into();
+                        // let price = get_asset_price_average(selector_of_token);
+
+                        let dollar_price_position= price*token_amount_base;
+                        let amount_to_receive=launch.token_per_dollar*dollar_price_position;
+                        token_amount_to_receive=amount_to_receive;
+                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
@@ -591,7 +712,7 @@ mod Launchpad {
                             deposited:token_amount_base,
                             withdraw_amount:0,
                             withdrawn:0,
-                            redeemable:0,
+                            redeemable:amount_to_receive,
                             refunded:0,
                             is_canceled:false,
                             remain_token_to_be_claimed:amount_to_receive,
@@ -599,15 +720,18 @@ mod Launchpad {
                         };
                         self.deposit_user_by_launch.write((sender, launch_id), deposited_amount_oracle);
 
-
                     }
                    
             }
 
             //  TODO
             // Substract amount remain in sale 
-            // launch.remain_balance-=token_amount;
-            // launch.amounts.deposited+=token_amount;
+            launch.remain_balance-=amount_to_receive;
+            // launch.remain_balance-=token_amount_to_receive;
+            launch.amounts.deposited+=token_amount_base;
+            // Send token
+            IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
+
             self.launchs.write(launch_id, launch);
             self.emit(EventDepositSend {id:launch_id, owner: sender, deposit:amount_deposit.clone()});
             launch_id
@@ -664,6 +788,29 @@ mod Launchpad {
             self.launchs.read(launch_id)
         }
 
+        fn get_is_dollar_paid_launch(self:@ContractState) -> bool {
+            self.is_paid_dollar_launch.read()
+        }
+
+        fn get_address_token_to_pay_launch(self:@ContractState) -> ContractAddress {
+            self.address_token_to_pay_launch.read()
+        }
+
+        fn get_amount_paid_dollar_launch(self:@ContractState) -> u256 {
+            self.amount_paid_dollar_launch.read()
+        }
+
+        fn get_amount_token_to_pay_launch(self:@ContractState
+        // , token_address:ContractAddress
+        ) -> u256 {
+            let token_address= self.address_token_to_pay_launch.read();
+            let selector_of_token=self.market_felt_by_asset.read(token_address);
+            let price_128 = LaunchpadInternalImpl::_get_asset_price_average(self, selector_of_token);
+            let price:u256=price_128.into();
+            let dollar_to_pay=self.amount_paid_dollar_launch.read();
+            let token_amount_to_pay=dollar_to_pay/price;
+            token_amount_to_pay
+        }
         // VIEW get all launchs
         // TODO add indexer and fix loop
         fn get_all_launchs(self:@ContractState) -> Span<Launch> {
