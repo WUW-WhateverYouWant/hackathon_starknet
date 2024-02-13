@@ -18,8 +18,8 @@ use wuw_contracts::interfaces::erc20::{
 
 
 
-
-#[cfg(test)]
+// TODO test on Sepolia for deployed Oracle
+// #[cfg(test)]
 mod test_oracle {
     use pragma_lib::types::{DataType, AggregationMode, PragmaPricesResponse};
     use pragma_lib::abi::{

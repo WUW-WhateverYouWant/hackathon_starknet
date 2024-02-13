@@ -32,6 +32,8 @@ export async function buy_token(
   account: AccountInterface,
   launch_id: number,
   token_amount_base: Uint256,
+  // token_amount_base: number,
+  
   asset:string
 ): Promise<TxCallInterface>{
   try {
@@ -41,43 +43,54 @@ export async function buy_token(
     console.log("launch_id",launch_id)
     console.log("token_amount_base",token_amount_base)
     console.log("asset",asset)
-    // const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
-    // const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
-    const provider = new RpcProvider()
-
+    const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
+    // const provider = new RpcProvider()
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,
       provider
     );
     const erc20Contract = new Contract(ERC20WUW.abi, asset, provider);
-    // Calldata for CREATE_LAUNCH_BASE_TOKEN_ORACLE
     console.log("Calldata compile")
 
-    const calldataCreateWithDuration = CallData.compile({
+    const calldataBuyToken = CallData.compile({
       launch_id: launch_id,
       token_amount_base: token_amount_base,
+      // token_amount_base: token_amount_base*10**18,
+      // token_amount_base: cairo.uint256(token_amount_base),
+
     });
 
     console.log("Execute multicall")
     // const nonce= await account.getNonce()
     // console.log("nonce",nonce)
 
-    let success = await account.execute([
+
+    let call_execute= [
       {
         contractAddress: erc20Contract.address,
         entrypoint: "approve",
         calldata: CallData.compile({
           recipient: asset,
-          amount: token_amount_base,
+          // amount: token_amount_base,
+          token_amount_base: token_amount_base,
         }),
       },
       {
         contractAddress: launchpadContract.address,
         entrypoint: "buy_token",
-        calldata: calldataCreateWithDuration,
+        calldata: calldataBuyToken,
       },
-    ],
+    ]
+    // const { suggestedMaxFee: estimateFee } = await account.estimateInvokeFee(   {
+    //   contractAddress: launchpadContract.address,
+    //   entrypoint: "buy_token",
+    //   calldata: calldataBuyToken,
+    // },);
+
+    // console.log("estimateFee",estimateFee)
+
+    let success = await account.execute(call_execute,
     undefined,
     //  [ERC20WUW.abi, LaunchpadAbi],
     //   {

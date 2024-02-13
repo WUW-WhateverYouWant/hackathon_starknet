@@ -94,7 +94,12 @@ mod Launchpad {
 
     use wuw_contracts::interfaces::erc20::{
       IERC20Dispatcher,
-      IERC20DispatcherTrait
+      IERC20DispatcherTrait,
+    };
+
+     use wuw_contracts::interfaces::erc20::{
+      IERC20Dispatcher,
+      IERC20DispatcherTrait,
     };
 
     use wuw_contracts::interfaces::jediswap:: {
@@ -105,6 +110,7 @@ mod Launchpad {
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::access::accesscontrol::AccessControlComponent;
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
     use core::starknet::event::EventEmitter;
     use core::result::ResultTrait;
@@ -504,19 +510,22 @@ mod Launchpad {
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
+            let owner = launch.owner;
 
             let mut launch= self.launchs.read(launch_id);
 
             // Verify owner 
-            assert!(sender == launch.owner, "not owner");
+            assert!(sender == owner, "not owner");
+            assert!(launch.cancel, "already cancel");
 
             // Check timestamp
             let timestamp=get_block_timestamp();
             assert!(timestamp<launch.end_date, "time < end_date");
 
-
             // Token back to owner
-            IERC20Dispatcher{contract_address:launch.asset}.transfer(sender, launch.total_amount);
+            // IERC20Dispatcher{contract_address:launch.asset}.transfer(sender, launch.total_amount);
+            IERC20Dispatcher{contract_address:launch.asset}.transfer(owner, launch.total_amount);
+            // ERC20ABIDispatcher{contract_address:launch.asset}.transfer(owner, launch.total_amount);
 
             // Update
             launch.is_canceled=true;
@@ -546,7 +555,7 @@ mod Launchpad {
 
             assert!(timestamp<launch.end_date, "time < end_date");
 
-            IERC20Dispatcher { contract_address: launch.asset}.transfer_from(contract_address, sender, launch.total_amount );
+            IERC20Dispatcher { contract_address: launch.asset}.transfer(sender, launch.total_amount );
             // Update
             launch.is_canceled=true;
             self.launchs.write(launch_id, launch);
@@ -554,9 +563,6 @@ mod Launchpad {
 
             launch_id
         }
-
-
-
 
         // USERS call
         fn refund_deposit_amount(
@@ -577,10 +583,10 @@ mod Launchpad {
 
                 let refund= amount_deposit_by_user.deposited;
 
-                IERC20Dispatcher { contract_address: launch.base_asset_token_address}.transfer_from(contract_address, sender, refund );
+                IERC20Dispatcher { contract_address: launch.base_asset_token_address}.transfer( sender, refund );
 
                 amount_deposit_by_user.deposited=0;
-                amount_deposit_by_user.refunded=0;
+                amount_deposit_by_user.refunded=refund;
 
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit_by_user);
                 self.emit(RefundBuyToken { asset_refund: launch.asset, amount_refund:refund})
@@ -611,42 +617,35 @@ mod Launchpad {
 
             // Add amount users
 
-            // Check if amount already exist : create or increase 
 
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
-            let base_asset_token_address= amount_deposit.base_asset_token_address;
+            let base_asset_token_address= launch.base_asset_token_address;
 
-            // Check amount
-
-            // TODO oracle calculation ETH
-            let mut amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
-
-            
+            // TODO check hard_cap and soft_cap
             // hard_cap
             // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
+            // soft_cap
+            // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
 
-            let mut token_amount_to_receive=token_amount_base*launch.token_received_per_one_base;
+            // TODO oracle calculation ETH
+            // Check amount
+            let mut amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base;
 
-            if launch.is_base_asset_oracle {
-
-
-            } else {
-
-            }
             // TODO User already deposit 
-            if amount_deposit.deposited > 0{ 
+            // Check if amount already exist : create or increase 
+
+            if amount_deposit.deposited > 0 { 
                     // Calculate token redeemable if oracle or not
                     amount_deposit.deposited+=token_amount_base;
 
                     if !launch.is_base_asset_oracle {
-                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
-
-                        // let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         amount_to_receive=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
-                        let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
-                        amount_deposit.total_token_to_be_claimed=amount_to_receive;
-                        amount_deposit.remain_token_to_be_claimed=amount_to_claim;
-                        amount_deposit.redeemable+=amount_to_receive;
+                        let amount_to_claim:u256 = token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
+                        assert!(amount_to_receive <= launch.remain_balance, "no token to sell");
+                      
+                        amount_deposit.total_token_to_be_claimed =amount_to_receive;
+                        amount_deposit.remain_token_to_be_claimed =amount_to_claim;
+                        amount_deposit.redeemable += amount_to_receive;
                         self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
                         
                     } else {
@@ -658,20 +657,14 @@ mod Launchpad {
                         // let price = get_asset_price_average(selector_of_token);
                         let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
                         let price:u256=price_128.into();
-                        let dollar_price_position= price*token_amount_base;
-                        let token_to_receive=launch.token_per_dollar*dollar_price_position;
+                        let dollar_price_position = price*token_amount_base;
+                        let token_to_receive =launch.token_per_dollar*dollar_price_position;
                         amount_to_receive=token_to_receive;
 
-                        // token_amount_to_receive=amount_to_receive;
                         assert!(amount_to_receive<=launch.remain_balance, "> remain_balance");
-
-                        // let amount_to_receive:u256=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
-                        // let amount_to_claim:u256=  token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
-                        
                         amount_deposit.total_token_to_be_claimed+=amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed+=amount_to_receive;
                         amount_deposit.redeemable+=amount_to_receive;
-
                         self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 
                     }
@@ -683,6 +676,7 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
 
                         assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+                        // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
@@ -706,18 +700,14 @@ mod Launchpad {
 
                         // Oracle calculation
                         // Per dollar calculation
-
-                        // let amount_to_receive:u256= token_amount_base*launch.token_received_per_one_base ;
-                        
                         let selector_of_token=self.market_felt_by_asset.read(launch.asset);
                         let price_u128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
                         let price:u256=price_u128.into();
-                        // let price = get_asset_price_average(selector_of_token);
 
                         let dollar_price_position= price*token_amount_base;
-                        let amount_to_receive=launch.token_per_dollar*dollar_price_position;
-                        token_amount_to_receive=amount_to_receive;
+                        amount_to_receive=dollar_price_position*launch.token_per_dollar;
                         assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+                        // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
                             base_asset_token_address:launch.base_asset_token_address,
@@ -742,7 +732,6 @@ mod Launchpad {
             //  TODO
             // Substract amount remain in sale 
             launch.remain_balance-=amount_to_receive;
-            // launch.remain_balance-=token_amount_to_receive;
             launch.amounts.deposited+=token_amount_base;
             // Send token
             IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
@@ -764,15 +753,16 @@ mod Launchpad {
             // Check timestamp
             let timestamp=get_block_timestamp();
             assert!(timestamp>launch.end_date, "launch not finish");
+            assert!(amount_deposit.deposited>0, "no buy");
 
             // Check is cancel 
             assert!(!launch.is_canceled, "launch cancel");
             
+            // TODO
             // Verify softcap ok
-            assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
+            // assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
 
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
-            assert!(amount_deposit.deposited>0, "no buy");
             assert!(amount_deposit.remain_token_to_be_claimed>0, "no remain balance");
             // Decrease amount
             // TODO
@@ -782,13 +772,18 @@ mod Launchpad {
                 // Send amount by claim 
                 let amount_to_send=amount_deposit.remain_token_to_be_claimed;
 
-                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer_from(contract, amount_deposit.owner, amount_to_send );
+                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer(amount_deposit.owner, amount_to_send );
                 amount_deposit.remain_token_to_be_claimed=0;
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 
             } else {
-                // Oracle 
+                // TODO check Pragma
+                // TODO : Oracle 
                 // Calculate price in dollar
+                let amount_to_send=amount_deposit.remain_token_to_be_claimed;
+                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer(amount_deposit.owner, amount_to_send );
+                amount_deposit.remain_token_to_be_claimed=0;
+                self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 
             }
 

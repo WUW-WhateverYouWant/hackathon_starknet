@@ -38,8 +38,9 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
-  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
-    cairo.uint256(1)
+  const [amountToBuy, setAmountToBuy] = useState<Uint256 | number | undefined>(
+    // cairo.uint256(1)
+    0
   );
   useEffect(() => {
     const updateWithdrawTo = () => {
@@ -172,8 +173,7 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
             onChange={(e) => {
               let str = String(Number(e?.target?.value) * 10 ** 18);
               setAmountToBuy(cairo.uint256(parseInt(str)));
-
-              // setAmountToBuy(cairo.uint256(parseInt(Number(e?.target?.value) * 10**18 )));
+              // setAmountToBuy(Number(e.target.value));
             }}
             placeholder="Amount to buy"
           ></Input>
@@ -183,6 +183,7 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
               buy_token(
                 account,
                 launch?.launch_id ?? id,
+                // cairo.uint256(BigInt(amountToBuy.toString())),
                 amountToBuy,
                 feltToAddress(BigInt(launch?.asset))
               )

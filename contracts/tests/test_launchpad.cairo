@@ -1,6 +1,7 @@
 use starknet::{
     ContractAddress, get_caller_address, Felt252TryIntoContractAddress, contract_address_const,
     ClassHash,
+    get_block_timestamp,
     ContractAddressIntoFelt252
     
 };
@@ -114,7 +115,10 @@ mod test_launchpad {
          DualCaseERC20,
     };
     use wuw_contracts::launchpad::launchpad::{
-        Launchpad
+        Launchpad,
+        ILaunchpad,
+        ILaunchpadDispatcher,
+        ILaunchpadDispatcherTrait
     };
 
     use array::ArrayTrait;
@@ -127,6 +131,7 @@ mod test_launchpad {
     use starknet::{
         ContractAddress, get_caller_address, Felt252TryIntoContractAddress, contract_address_const,
         ClassHash,
+        get_block_timestamp,
         ContractAddressIntoFelt252
         
     };
@@ -200,10 +205,69 @@ mod test_launchpad {
         // First declare and deploy a contract
         let sender=get_caller_address();
         let address= deploy_launchpad(sender);
-
-
-        let erc20_address=deploy_setup_erc20();
     }
 
+
+    #[test]
+    fn test_launchpad_all() {
+        // First declare and deploy a contract
+        let deployer=get_caller_address();
+        let sender=OWNER();
+        let sender_felt=ContractAddressIntoFelt252::into(OWNER());
+        let launchpad_address= deploy_launchpad(sender);
+
+        // start_prank(CheatTarget::One(launchpad_address), OWNER());
+
+        let erc20_address=deploy_setup_erc20();
+        // let erc20_base=deploy_setup_erc20();
+
+        let erc20= IERC20Dispatcher{contract_address:erc20_address};
+        let mut total_amount:u256 =1;
+
+        erc20.approve(launchpad_address, total_amount);
+        let launchpad = ILaunchpadDispatcher{contract_address:launchpad_address};
+        let base_asset_token_address:ContractAddress=erc20_address;
+        // let start_date:u64=get_block_timestamp()+1000;
+
+        let start_date:u64 = 1_707_851_123_736+5000;
+        let end_date:u64 =start_date+10_000;
+
+        println!("start_date {}", start_date);
+        println!("end_date {}", end_date);
+        let token_received_per_one_base:u256 =1;
+        let soft_cap:u256 =1;
+        let max_deposit_by_user:u256 = 1;
+
+        println!("create_launch");
+
+        let launch_id= launchpad.create_launch(
+            erc20_address,
+            base_asset_token_address,
+            total_amount,
+            token_received_per_one_base,
+            start_date,
+            end_date,
+            soft_cap,
+            max_deposit_by_user
+
+        );
+
+        let launch = launchpad.get_launch_by_id(launch_id);
+
+        println!("launch {}", launch.remain_balance);
+
+        assert!(launch.total_amount== total_amount, "not_total_amount");
+
+        println!("approve before buy token");
+
+        erc20.approve(launchpad_address,total_amount);
+        println!("try buy token");
+
+        let buy_position= launchpad.buy_token(
+            launch_id,
+            total_amount,
+        );
+        
+    }
 
 }

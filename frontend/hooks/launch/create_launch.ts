@@ -46,8 +46,8 @@ export async function create_launch(
     console.log("cancelable", cancelable)
     console.log("transferable", transferable)
 
-    // const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
-    const provider = new RpcProvider()
+    const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
+    // const provider = new RpcProvider()
 
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
@@ -72,6 +72,7 @@ export async function create_launch(
     console.log("Execute multicall")
 
     const is_oracle = await launchpadContract.get_is_dollar_paid_launch();
+    console.log("is_oracle", is_oracle)
 
     if (is_oracle) {
 
