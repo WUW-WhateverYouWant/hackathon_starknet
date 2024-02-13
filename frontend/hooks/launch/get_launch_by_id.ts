@@ -2,6 +2,7 @@ import { useToast } from "@chakra-ui/react";
 import {
   CONTRACT_DEPLOYED_STARKNET,
   DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
 } from "../../constants/address";
 import { CreateRangeProps, LaunchInterface, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
@@ -24,17 +25,15 @@ import {
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
+
 
 export async function get_launch_by_id(
   id: number,
-): Promise<LaunchInterface|undefined> {
+): Promise<LaunchInterface | undefined> {
   try {
 
     console.log('id', id)
-    const provider = new RpcProvider({ nodeUrl: constants.NetworkName.SN_GOERLI })
+    const provider = new RpcProvider({ nodeUrl: DEFAULT_NETWORK })
     // const provider = new RpcProvider();
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,

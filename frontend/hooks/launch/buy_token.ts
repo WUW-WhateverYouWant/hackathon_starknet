@@ -1,10 +1,8 @@
 import { useToast } from "@chakra-ui/react";
-import {
-  CONTRACT_DEPLOYED_STARKNET,
-  DEFAULT_NETWORK,
-} from "../../constants/address";
+
 import { CreateRangeProps, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
+import {  } from "../../constants/address";
 import LaunchpadAbi from "../../constants/abi/launchpad_wuw.contract_class.json";
 import ERC20WUW from "../../constants/abi/wuw_contracts_ERC20Mintable.contract_class.json";
 import {
@@ -24,9 +22,11 @@ import {
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
+import {
+  CONTRACT_DEPLOYED_STARKNET,
+  DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
+} from "../../constants/address";
 
 export async function buy_token(
   account: AccountInterface,
@@ -42,7 +42,8 @@ export async function buy_token(
     console.log("token_amount_base",token_amount_base)
     console.log("asset",asset)
     // const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
-    const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
+    // const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
+    const provider = new RpcProvider()
 
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
@@ -71,11 +72,11 @@ export async function buy_token(
           amount: token_amount_base,
         }),
       },
-      // {
-      //   contractAddress: launchpadContract.address,
-      //   entrypoint: "buy_token",
-      //   calldata: calldataCreateWithDuration,
-      // },
+      {
+        contractAddress: launchpadContract.address,
+        entrypoint: "buy_token",
+        calldata: calldataCreateWithDuration,
+      },
     ],
     undefined,
     //  [ERC20WUW.abi, LaunchpadAbi],

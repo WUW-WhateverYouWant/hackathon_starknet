@@ -39,6 +39,7 @@ enum ViewType {
 export const LaunchViewContainer = () => {
   const account = useAccount().account;
   const [launchs, setLaunchs] = useState<LaunchInterface[]>([]);
+  const [isLoadOneTime, setIsLoadOneTime] = useState<boolean>(false);
   const [depositsByUser, setDepositsUser] = useState<DepositByUser[]>([]);
 
   const [launchsCreated, setLaunchCreated] = useState<LaunchInterface[]>([]);
@@ -46,45 +47,53 @@ export const LaunchViewContainer = () => {
     EnumStreamSelector.SENDER
   );
   const [viewType, setViewType] = useState<ViewType>(ViewType.TABS);
-  console.log("launchs state Send", launchs);
+  // console.log("launchs state Send", launchs);
 
   useEffect(() => {
     const getAllLaunchs = async () => {
-      const contractAddress =
-        CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
+
 
       const launchs = await get_all_launchs();
-
+      console.log("all_launchs",launchs)
       setLaunchs(launchs)
     };
 
     const getLaunchsByOwner = async () => {
-      const contractAddress =
-        CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
+  
 
       const launchsByOwner = await get_launchs_by_owner(account?.address);
 
       setLaunchCreated(launchsByOwner)
+      setIsLoadOneTime(true)
     };
 
     const getDepositByOwner = async () => {
-      const contractAddress =
-        CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK].launchFactory;
 
       const deposits = await get_deposit_by_users(account?.address);
 
       setDepositsUser(deposits)
     };
+
+    if(
+      true
+      // launchs && 
+      // launchs?.length == 0 
+      // && !isLoadOneTime
+      // && 
+      // account?.address
+      )  {
+      getAllLaunchs();
+
+    }
     if (
       account?.address
       // &&  selectView == EnumStreamSelector.SENDER
     ) {
-      getAllLaunchs();
       getLaunchsByOwner();
       getDepositByOwner();
     }
    
-  }, [account?.address, account]);
+  }, [account?.address, account, isLoadOneTime]);
 
   return (
     <>

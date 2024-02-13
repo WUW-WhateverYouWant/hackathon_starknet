@@ -85,11 +85,11 @@ async function main() {
   // console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
-  const contractClassHash =CLASS_HASH.ERC20;
+  const contractClassHash =CLASS_HASH.ERC20_MINTABLE_SEPOLIA;
 
   console.log("✅ Test Contract declared with classHash =", contractClassHash);
 
-  const tokenContract= new Contract(compiledSierra.abi,  CONFIG_ADDRESS.ERC.ONE, account0)
+  const tokenContract= new Contract(compiledSierra.abi,  CONFIG_ADDRESS.ERC20_MINTABLE_SEPOLIA, account0)
   const mint = await tokenContract.mint(account0?.address, "10")
   console.log("mint")
   // await provider.waitForTransaction(mint);

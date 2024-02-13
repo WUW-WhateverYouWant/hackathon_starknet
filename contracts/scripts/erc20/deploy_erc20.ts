@@ -29,7 +29,7 @@ async function main() {
   }
   // Initialize RPC provider with a specified node URL (Goerli testnet in this case)
   const provider = new RpcProvider({
-    nodeUrl: "SN_GOERLI",
+    nodeUrl: "SN_SEPOLIA",
   });
 
   // Check that communication with provider is OK
@@ -65,28 +65,28 @@ async function main() {
   // Since we already have the classhash we will be skipping this part
   // Declare the contract
 
-  // const ch = hash.computeSierraContractClassHash(compiledSierra);
-  // console.log("Class hash calc =", ch);
-  // const compCH = hash.computeCompiledClassHash(compiledCasm);
-  // console.log("compiled class hash =", compCH);
-  // const declareResponse = await account0.declare({
-  //   contract: compiledSierra,
-  //   casm: compiledCasm,
-  // });
-  // const contractClassHash = declareResponse.class_hash;
-  // console.log("contractClassHash", contractClassHash)
+  const ch = hash.computeSierraContractClassHash(compiledSierra);
+  console.log("Class hash calc =", ch);
+  const compCH = hash.computeCompiledClassHash(compiledCasm);
+  console.log("compiled class hash =", compCH);
+  const declareResponse = await account0.declare({
+    contract: compiledSierra,
+    casm: compiledCasm,
+  });
+  const contractClassHash = declareResponse.class_hash;
+  console.log("contractClassHash", contractClassHash)
 
-  // // Wait for the transaction to be confirmed and log the transaction receipt
-  // const txR = await provider.waitForTransaction(
-  //   declareResponse.transaction_hash
-  // );
+  // Wait for the transaction to be confirmed and log the transaction receipt
+  const txR = await provider.waitForTransaction(
+    declareResponse.transaction_hash
+  );
   // console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
   // const contractClassHash =
   //   "0x6012b224e2dc901c9461cb30d1c3aca01bbf5602ffc1da071c8aa6fa5e3b027";
 
-  const contractClassHash= "0x1725c7f27dc2bf007ad9019c642c0f3a79a713ef14b42b6a3930eeb4974942f"
+  // const contractClassHash= "0x1725c7f27dc2bf007ad9019c642c0f3a79a713ef14b42b6a3930eeb4974942f"
 
   console.log("✅ Test Contract declared with classHash =", contractClassHash);
 

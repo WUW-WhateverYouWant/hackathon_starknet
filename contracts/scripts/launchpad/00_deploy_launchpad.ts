@@ -12,7 +12,7 @@ import {
 import fs, { read, readFileSync } from "fs";
 import dotenv from "dotenv";
 import path from "path"
-import { CLASS_HASH } from "../../config";
+import { CLASS_HASH, CONFIG_ADDRESS, TOKENS_ADDRESS } from "../../config";
 // const PUBLIC_KEY = process.env.PUBLIC_KEY;
 // const PRIVATE_KEY = process.env.PUBLIC_KEY;
 dotenv.config();
@@ -47,7 +47,7 @@ async function main() {
 
   // Parse the compiled contract files
 
-  
+
   let fileStr = path.resolve(__dirname, "../../constants/launchpad.contract_class.json")
   const compiledSierra = json.parse(
     fs
@@ -66,44 +66,48 @@ async function main() {
   // Since we already have the classhash we will be skipping this part
   // Declare the contract
 
-  // const ch = hash.computeSierraContractClassHash(compiledSierra);
-  // console.log("Class hash calc =", ch);
-  // const compCH = hash.computeCompiledClassHash(compiledCasm);
-  // console.log("compiled class hash =", compCH);
-  // const declareResponse = await account0.declare({
-  //   contract: compiledSierra,
-  //   casm: compiledCasm,
-  // });
-  // const contractClassHash = declareResponse.class_hash;
-  // console.log("contractClassHash", contractClassHash)
+  const ch = hash.computeSierraContractClassHash(compiledSierra);
+  console.log("Class hash calc =", ch);
+  const compCH = hash.computeCompiledClassHash(compiledCasm);
+  console.log("compiled class hash =", compCH);
+  const declareResponse = await account0.declare({
+    contract: compiledSierra,
+    casm: compiledCasm,
+  });
+  const contractClassHash = declareResponse.class_hash;
+  console.log("contractClassHash", contractClassHash)
 
-  // // Wait for the transaction to be confirmed and log the transaction receipt
-  // const txR = await provider.waitForTransaction(
-  //   declareResponse.transaction_hash
-  // );
-  // console.log("tx receipt =", txR);
+  // Wait for the transaction to be confirmed and log the transaction receipt
+  const txR = await provider.waitForTransaction(
+    declareResponse.transaction_hash
+  );
+  console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
 
-  const contractClassHash= CLASS_HASH.LAUNCHPAD
+  // const contractClassHash = CLASS_HASH.LAUNCHPAD
 
   console.log("✅ Launchpad Contract declared with classHash =", contractClassHash);
 
   console.log("Deploy of contract in progress...");
   const nonce = await account0.getNonce();
-  console.log("accountAddress",accountAddress)
+  console.log("accountAddress", accountAddress)
   const { transaction_hash: th2, address } = await account0.deployContract(
     {
       classHash: contractClassHash,
-      constructorCalldata: [  accountAddress.toString()],
+      constructorCalldata: [accountAddress.toString()],
     },
-    {nonce:nonce}
+    { nonce: nonce }
   );
   console.log("🚀 contract_address =", address);
-  // Wait for the deployment transaction to be confirmed
   await provider.waitForTransaction(th2);
-
   console.log("✅ Test completed.");
+
+  console.log(" Go admin process.");
+
+
+  // Wait for the deployment transaction to be confirmed
+
 }
 main()
   .then(() => process.exit(0))

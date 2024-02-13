@@ -9,10 +9,12 @@ import {
   hash,
   cairo,
 } from "starknet";
-import fs from "fs";
+import fs, { read, readFileSync } from "fs";
 import dotenv from "dotenv";
-import { CLASS_HASH, CONFIG_ADDRESS } from "../../config";
-import path from "path";
+import path from "path"
+import { CLASS_HASH, CONFIG_ADDRESS, TOKENS_ADDRESS } from "../../config";
+// const PUBLIC_KEY = process.env.PUBLIC_KEY;
+// const PRIVATE_KEY = process.env.PUBLIC_KEY;
 dotenv.config();
 const PUBLIC_KEY = process.env.PUBLIC_KEY2;
 const PRIVATE_KEY = process.env.PK_DEV2;
@@ -43,22 +45,20 @@ async function main() {
   console.log("existing_ACCOUNT_ADDRESS=", accountAddress);
   console.log("existing account connected.\n");
 
-  let fileStr = path.resolve(__dirname, "../../constants/erc20_mintable.contract_class.json")
-
   // Parse the compiled contract files
+
+
+  let fileStr = path.resolve(__dirname, "../../constants/launchpad.contract_class.json")
   const compiledSierra = json.parse(
     fs
       .readFileSync(fileStr)
       .toString("ascii")
   );
-
-  let compileFile = path.resolve(__dirname, "../../constants/erc20_mintable.compiled_contract_class.json")
+  let compileFile = path.resolve(__dirname, "../../constants/launchpad.compiled_contract_class.json")
 
   const compiledCasm = json.parse(
     fs
-   
-      .readFileSync(compileFile)
-
+      .readFileSync(compileFile.toString())
       .toString("ascii")
   );
 
@@ -84,23 +84,35 @@ async function main() {
   // console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
-  const contractClassHash = CLASS_HASH.ERC20_MINTABLE_SEPOLIA
-  console.log("✅ Test Contract declared with classHash =", contractClassHash);
 
-  const tokenContract= new Contract(compiledSierra.abi,  CONFIG_ADDRESS.ERC20_MINTABLE_SEPOLIA, account0)
+  const contractClassHash = CLASS_HASH.LAUNCHPAD
+  console.log("Deploy of contract in progress...");
+  const nonce = await account0.getNonce();
+  
+  const launchpadContract = new Contract(compiledSierra.abi, CONFIG_ADDRESS.LAUNCHPAD, account0)
 
-
-  console.log(" CONFIG_ADDRESS.ERC20_MINTABLE",  CONFIG_ADDRESS.ERC20_MINTABLE_SEPOLIA)
-  console.log("account0?.address", account0?.address)
-  // const init_supply= cairo.uint256(1000)
-  const mint_supply= cairo.uint256(100*10**18)
-  console.log("mint_supply", mint_supply)
-
-  const mint = await tokenContract.mint(account0?.address,mint_supply)
-  console.log("mint", mint)
-
+  // Set oracle pragma address 
+  let pragma_address=CONFIG_ADDRESS.PRAGMA_ORACLE_SEPOLIA
  
-  console.log("✅ Test completed.");
+  const set_pragma_address = await launchpadContract.set_pragma_address(pragma_address)
+  // set jediwap factory
+  let factory_jediswap_v2=CONFIG_ADDRESS.JEDIWAP_FACTORY_SEPOLIA_V2
+
+  const set_jediswap_v2 = await launchpadContract.set_address_jediswap_factory_v2(factory_jediswap_v2)
+  // Set fees
+  let is_paid_dollar = true;
+  let address_token_to_pay = TOKENS_ADDRESS.ETH;
+  let amount_to_paid_dollar_launch = cairo.uint256(10);
+  let selector= shortString.encodeShortString("ETH/USD");
+ 
+  const set_fees = await launchpadContract.set_params_fees(is_paid_dollar,
+    address_token_to_pay,
+    amount_to_paid_dollar_launch,
+    selector)
+  console.log("✅ Admin process setup fees.");
+
+  // Wait for the deployment transaction to be confirmed
+
 }
 main()
   .then(() => process.exit(0))

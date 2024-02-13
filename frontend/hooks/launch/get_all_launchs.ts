@@ -1,7 +1,9 @@
 import { useToast } from "@chakra-ui/react";
 import {
+  CHAIN_IDS,
   CONTRACT_DEPLOYED_STARKNET,
   DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
 } from "../../constants/address";
 import { CreateRangeProps, LaunchInterface, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
@@ -24,16 +26,14 @@ import {
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
-
 export async function get_all_launchs(
 ): Promise<LaunchInterface[]|undefined> {
   try {
 
     console.log('get_all_launchs : ',)
-    const provider = new RpcProvider({ nodeUrl: constants.NetworkName.SN_GOERLI })
+    // const provider = new RpcProvider({ chainId:CHAIN_IDS.SEPOLIA })
+    const provider = new RpcProvider({ nodeUrl: DEFAULT_NETWORK })
+    // const provider = new RpcProvider()
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,
@@ -41,6 +41,7 @@ export async function get_all_launchs(
     );
 
     const allLaunchs = await launchpadContract.get_all_launchs();
+    console.log("allLaunchs", allLaunchs)
     return allLaunchs
 
   } catch (e) {

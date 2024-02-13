@@ -2,6 +2,7 @@ import { useToast } from "@chakra-ui/react";
 import {
   CONTRACT_DEPLOYED_STARKNET,
   DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
 } from "../../constants/address";
 import { CreateRangeProps, DepositByUser, LaunchInterface, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
@@ -24,9 +25,6 @@ import {
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
 
 export async function get_deposit_by_users(
   owner:string
@@ -34,7 +32,7 @@ export async function get_deposit_by_users(
   try {
 
     console.log('get_deposit_by_users : ', owner)
-    const provider = new RpcProvider({ nodeUrl: constants.NetworkName.SN_GOERLI })
+    const provider = new RpcProvider({ nodeUrl: DEFAULT_NETWORK})
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,

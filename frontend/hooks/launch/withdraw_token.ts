@@ -1,8 +1,5 @@
 import { useToast } from "@chakra-ui/react";
-import {
-  CONTRACT_DEPLOYED_STARKNET,
-  DEFAULT_NETWORK,
-} from "../../constants/address";
+
 import { CreateRangeProps, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
 import LaunchpadAbi from "../../constants/abi/launchpad_wuw.contract_class.json";
@@ -23,10 +20,12 @@ import {
   stark,
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
+import {
+  CONTRACT_DEPLOYED_STARKNET,
+  DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
+} from "../../constants/address";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
 
 export async function withdraw_token(
   account: AccountInterface,
@@ -38,7 +37,7 @@ export async function withdraw_token(
     console.log("account", account?.address)
     console.log("launch_id",launch_id)
  
-    const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
+    const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,

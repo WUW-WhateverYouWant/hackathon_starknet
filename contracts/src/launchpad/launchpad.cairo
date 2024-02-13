@@ -49,13 +49,13 @@ trait ILaunchpad<TContractState> {
     fn set_address_token_to_pay_launch(ref self:TContractState, address_token_to_pay_launch:ContractAddress);
     fn set_amount_paid_dollar_launch(ref self:TContractState, amount_paid_dollar_launch:u256);
     fn set_token_selector(ref self:TContractState, address:ContractAddress, selector:felt252);
-    // fn set_params_fees(
-    //     ref self:TContractState, 
-    //     is_paid_dollar_launch:bool,
-    //     address:ContractAddress, 
-    //     amount_paid_dollar_launch:u256,
-    //     selector:felt252
-    // );
+    fn set_params_fees(
+        ref self:TContractState, 
+        is_paid_dollar_launch:bool,
+        address_token_to_pay:ContractAddress, 
+        amount_paid_dollar_launch:u256,
+        selector:felt252
+    );
    
     // Views
     // TODO add getters before indexer 
@@ -220,7 +220,8 @@ mod Launchpad {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        owner: ContractAddress
+        owner: ContractAddress,
+        // pragma_oracle_address: ContractAddress,
     ) {
 
         // let owner=get_caller_address();
@@ -319,6 +320,20 @@ mod Launchpad {
         fn set_token_selector(ref self:ContractState, address:ContractAddress, selector:felt252) {
             self.accesscontrol.assert_only_role(ADMIN_ROLE);
             self.tokens_selectors.write(address, selector);
+        }
+
+
+        fn set_params_fees(
+            ref self:ContractState, 
+            is_paid_dollar_launch:bool,
+            address_token_to_pay:ContractAddress, 
+            amount_paid_dollar_launch:u256,
+            selector:felt252
+        ) {
+            self.set_is_paid_dollar_launch(is_paid_dollar_launch);
+            self.set_address_token_to_pay_launch(address_token_to_pay);
+            self.set_amount_paid_dollar_launch(amount_paid_dollar_launch);
+            self.set_token_selector(address_token_to_pay, selector);
         }
 
    
@@ -501,7 +516,7 @@ mod Launchpad {
 
 
             // Token back to owner
-            IERC20Dispatcher{contract_address:launch.asset}.transfer_from(contract_address, sender, launch.total_amount);
+            IERC20Dispatcher{contract_address:launch.asset}.transfer(sender, launch.total_amount);
 
             // Update
             launch.is_canceled=true;

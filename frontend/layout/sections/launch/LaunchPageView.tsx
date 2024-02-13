@@ -39,7 +39,7 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
   const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
-    cairo.uint256(0)
+    cairo.uint256(1)
   );
   useEffect(() => {
     const updateWithdrawTo = () => {

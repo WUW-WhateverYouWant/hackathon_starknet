@@ -30,7 +30,7 @@ async function main() {
   }
   // Initialize RPC provider with a specified node URL (Goerli testnet in this case)
   const provider = new RpcProvider({
-    nodeUrl: "SN_GOERLI",
+    nodeUrl: "SN_SEPOLIA",
   });
 
   // Check that communication with provider is OK

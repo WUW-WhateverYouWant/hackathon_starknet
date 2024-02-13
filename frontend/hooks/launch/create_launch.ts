@@ -2,6 +2,7 @@ import { useToast } from "@chakra-ui/react";
 import {
   CONTRACT_DEPLOYED_STARKNET,
   DEFAULT_NETWORK,
+  LAUNCHPAD_TESTNET_ADDRESS
 } from "../../constants/address";
 import { CreateRangeProps, TxCallInterface, } from "../../types";
 import { ADDRESS_LENGTH } from "../../constants";
@@ -24,9 +25,6 @@ import {
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
 
-const LAUNCHPAD_TESTNET_ADDRESS =
-  CONTRACT_DEPLOYED_STARKNET[constants.NetworkName.SN_GOERLI]
-    .launchFactory;
 
 export async function create_launch(
   account: AccountInterface,
@@ -40,15 +38,17 @@ export async function create_launch(
   end_date: number,
   soft_cap: Uint256,
   max_deposit_by_user: Uint256
-): Promise<TxCallInterface>{
+): Promise<TxCallInterface> {
   try {
 
     console.log("total_amount", total_amount)
     console.log("asset", asset)
     console.log("cancelable", cancelable)
     console.log("transferable", transferable)
-  
-    const provider = new RpcProvider({nodeUrl:constants.NetworkName.SN_GOERLI})
+
+    // const provider = new RpcProvider({nodeUrl:DEFAULT_NETWORK})
+    const provider = new RpcProvider()
+
     const launchpadContract = new Contract(
       LaunchpadAbi.abi,
       LAUNCHPAD_TESTNET_ADDRESS,
@@ -65,51 +65,107 @@ export async function create_launch(
       token_received_per_one_base: token_received_per_one_base,
       start_date: start_date,
       end_date: end_date,
-      soft_cap:soft_cap,
+      soft_cap: soft_cap,
       max_deposit_by_user: max_deposit_by_user,
     });
 
     console.log("Execute multicall")
-    // const nonce= await account.getNonce()
-    // console.log("nonce",nonce)
 
-    let success = await account.execute([
-      {
-        contractAddress: erc20Contract.address,
-        entrypoint: "approve",
-        calldata: CallData.compile({
-          recipient: launchpadContract.address,
-          amount: total_amount,
-        }),
-      },
-      {
-        contractAddress: launchpadContract.address,
-        entrypoint: "create_launch",
-        calldata: calldataCreateWithDuration,
-      },
-    ],
-    undefined,
-    //  [ERC20WUW.abi, LaunchpadAbi],
-    //   {
-    //   nonce:nonce
-    // }
-    
-    );
-    console.log(
-      "✅ create_launch invoked at :",
-      success?.transaction_hash
-    );
+    const is_oracle = await launchpadContract.get_is_dollar_paid_launch();
+
+    if (is_oracle) {
+
+      let asset_paid = await launchpadContract.get_address_token_to_pay_launch();
+      const erc20PaidContract = new Contract(ERC20WUW.abi, asset_paid, provider);
+      let amount_paid_fees = await launchpadContract.get_amount_token_to_pay_launch();
+      let success = await account.execute([
+        {
+          contractAddress: erc20PaidContract.address,
+          entrypoint: "approve",
+          calldata: CallData.compile({
+            recipient: launchpadContract.address,
+            amount: amount_paid_fees,
+          }),
+        },
+        {
+          contractAddress: erc20Contract.address,
+          entrypoint: "approve",
+          calldata: CallData.compile({
+            recipient: launchpadContract.address,
+            amount: total_amount,
+          }),
+        },
+        {
+          contractAddress: launchpadContract.address,
+          entrypoint: "create_launch",
+          calldata: calldataCreateWithDuration,
+        },
+      ],
+        undefined,
+        //  [ERC20WUW.abi, LaunchpadAbi],
+        //   {
+        //   nonce:nonce
+        // }
+
+      );
+      console.log(
+        "✅ create_launch invoked at :",
+        success?.transaction_hash
+      );
+      return {
+        // tx: tx,
+        hash: success?.transaction_hash,
+        isSuccess: true,
+        message: "200",
+      };
 
 
-    return {
-      // tx: tx,
-      hash:success?.transaction_hash,
-      isSuccess: true,
-      message: "200",
-    };
+    } else {
+
+      // const nonce= await account.getNonce()
+      // console.log("nonce",nonce)
+
+      let success = await account.execute([
+        {
+          contractAddress: erc20Contract.address,
+          entrypoint: "approve",
+          calldata: CallData.compile({
+            recipient: launchpadContract.address,
+            amount: total_amount,
+          }),
+        },
+        {
+          contractAddress: launchpadContract.address,
+          entrypoint: "create_launch",
+          calldata: calldataCreateWithDuration,
+        },
+      ],
+        undefined,
+        //  [ERC20WUW.abi, LaunchpadAbi],
+        //   {
+        //   nonce:nonce
+        // }
+
+      );
+      console.log(
+        "✅ create_launch invoked at :",
+        success?.transaction_hash
+      );
+      return {
+        // tx: tx,
+        hash: success?.transaction_hash,
+        isSuccess: true,
+        message: "200",
+      };
+
+
+    }
+
+
+
   } catch (e) {
     console.log("Error create_launch", e);
-    
+
     return {
       tx: undefined,
       isSuccess: false,
