@@ -13,7 +13,7 @@ use wuw_contracts::types::launch:: {
 trait ILaunchpad<TContractState> {
     fn create_launch(ref self:TContractState,
         asset:ContractAddress, 
-        base_asset_token_address:ContractAddress, 
+        quote_token_address:ContractAddress, 
         total_amount:u256, 
         token_received_per_one_base:u256,
         start_date:u64, 
@@ -26,7 +26,7 @@ trait ILaunchpad<TContractState> {
 
     fn create_launch_base_oracle(ref self:TContractState,
         asset:ContractAddress, 
-        token_buy:ContractAddress, 
+        quote_token_address:ContractAddress, 
         total_amount:u256, 
         start_date:u64, 
         end_date:u64, 
@@ -40,6 +40,7 @@ trait ILaunchpad<TContractState> {
     fn buy_token(ref self:TContractState,launch_id:u64, token_amount_base:u256)-> u64;
     fn withdraw_token(ref self:TContractState,launch_id:u64)-> u64;
     fn cancel_launch(ref self:TContractState,launch_id:u64)-> u64;
+    fn launch_liquidity(ref self:TContractState,launch_id:u64)-> u64;
 
     // Admin
     fn set_oracle_base_asset(ref self:TContractState,asset_address:ContractAddress, is_oracle:bool);
@@ -56,6 +57,8 @@ trait ILaunchpad<TContractState> {
         amount_paid_dollar_launch:u256,
         selector:felt252
     );
+    fn set_address_jediswap_nft_router_v2(ref self:TContractState, address_jediswap_nft_router_v2:ContractAddress);
+    // fn transfer_token_amount(ref self:TContractState, address:ContractAddress, token_amount:u256);
    
     // Views
     // TODO add getters before indexer 
@@ -67,7 +70,6 @@ trait ILaunchpad<TContractState> {
     fn get_address_token_to_pay_launch(self:@TContractState) -> ContractAddress;
     fn get_amount_paid_dollar_launch(self:@TContractState) -> u256;
     fn get_amount_token_to_pay_launch(self:@TContractState) -> u256;
-
 
 }
 
@@ -89,7 +91,9 @@ mod Launchpad {
         PragmaOracleAddressSet,
         SetJediwapV2Factory,
         SetIsPaidDollarLaunch,
-        SetAddressTokenToPayLaunch
+        SetAddressTokenToPayLaunch,
+        SetJediwapNFTRouterV2,
+        AddLiquidity
     };
 
     use wuw_contracts::interfaces::erc20::{
@@ -97,14 +101,13 @@ mod Launchpad {
       IERC20DispatcherTrait,
     };
 
-     use wuw_contracts::interfaces::erc20::{
-      IERC20Dispatcher,
-      IERC20DispatcherTrait,
-    };
-
     use wuw_contracts::interfaces::jediswap:: {
        IJediswapFactoryV2,
-       IJediswapNFTRouterV2
+       IJediswapFactoryV2Dispatcher,
+       IJediswapFactoryV2DispatcherTrait,
+       IJediswapNFTRouterV2,
+       IJediswapNFTRouterV2Dispatcher,
+       IJediswapNFTRouterV2DispatcherTrait,
     };
 
     use openzeppelin::token::erc20::ERC20Component;
@@ -167,7 +170,6 @@ mod Launchpad {
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         AccessControlEvent: AccessControlComponent::Event,
-
         #[flat]
         SRC5Event: SRC5Component::Event,
 
@@ -177,8 +179,10 @@ mod Launchpad {
         RefundBuyToken:RefundBuyToken,
         PragmaOracleAddressSet:PragmaOracleAddressSet,
         SetJediwapV2Factory:SetJediwapV2Factory,
+        SetJediwapNFTRouterV2:SetJediwapNFTRouterV2,
         SetIsPaidDollarLaunch:SetIsPaidDollarLaunch,
         SetAddressTokenToPayLaunch:SetAddressTokenToPayLaunch,
+        AddLiquidity:AddLiquidity
      
     }
 
@@ -186,8 +190,6 @@ mod Launchpad {
     struct Storage {
 
         next_launch_id:u64,
-
-
         launchs:LegacyMap::<u64, Launch>,
         deposit_user_by_launch: LegacyMap::<(ContractAddress, u64), DepositByUser>,
 
@@ -201,6 +203,7 @@ mod Launchpad {
         pragma_oracle_address:ContractAddress,
         own_pragma_oracle_address:ContractAddress,
         address_jediswap_factory_v2:ContractAddress,
+        address_jediswap_nft_router_v2:ContractAddress,
         market_felt_by_asset:LegacyMap::<ContractAddress, felt252>,
 
         // Fees management
@@ -247,22 +250,52 @@ mod Launchpad {
     // TODO implement internal functions and refacto
     #[generate_trait]
     impl LaunchpadInternalImpl of LaunchpadInternalTrait {
-
+ 
+        // TODO finish
         // Owner cancel launch and receive their tokens back
         fn _add_liquidity(
             ref self:ContractState,
-            token_a:ContractAddress,
-            token_b:ContractAddress
+            launch:Launch,
+            // fee:u32, // TODO add fee select by user
+            // token_a:ContractAddress,
+            // token_b:ContractAddress
         ){
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
+
+            let factory_address = self.address_jediswap_factory_v2.read();
+            let router_address =  self.address_jediswap_nft_router_v2.read();
+
+            // Look if pool already exist 
+            // Init and Create pool if not exist 
+            let fee:u32 = 10_000;
+            let factory = IJediswapFactoryV2Dispatcher {contract_address:factory_address};
+            let token_a = launch.asset;
+            let token_b= launch.quote_token_address;
+            // TODO tokens check 
+            // assert!(token_a != token_b, "same token");
+
+            let mut pool:ContractAddress = factory.get_pool(token_a, token_b, fee);
+
+            // TODO check if pool exist 
+            // Pool need to be create
+            if pool.into() == 0_felt252 {
+                pool = factory.create_pool(token_a,token_b, fee);
+            } 
+          
+            // TODO Increase liquidity with router if exist
+            // Approve token to be transfered
+            // let token_quote = IERC20Dispatcher {contract_address:token_b};
+            let router = IJediswapNFTRouterV2Dispatcher {contract_address:router_address};
 
         }
 
         fn _get_asset_price_average(self: @ContractState, key:felt252 ) ->  u128 {
 
             let oracle_address=self.pragma_oracle_address.read();
+            // TODO assert pragma oracle 
+            assert!(!oracle_address.is_zero(), "oracle undefined");
             let oracle_dispatcher = IPragmaABIDispatcher{contract_address : oracle_address};
 
             let asset=DataType::SpotEntry(key);
@@ -290,6 +323,13 @@ mod Launchpad {
             // self.ownable.assert_only_owner();
             self.address_jediswap_factory_v2.write(address_jediswap_factory_v2);
             self.emit(SetJediwapV2Factory{ address_jediswap_factory_v2:address_jediswap_factory_v2});
+        }
+
+        fn set_address_jediswap_nft_router_v2(ref self:ContractState, address_jediswap_nft_router_v2:ContractAddress) {
+            self.accesscontrol.assert_only_role(ADMIN_ROLE);
+            self.address_jediswap_nft_router_v2.write(address_jediswap_nft_router_v2);
+            self.emit(SetJediwapNFTRouterV2{ address_jediswap_nft_router_v2:address_jediswap_nft_router_v2});
+
         }
 
         // Pragma oracle address
@@ -342,14 +382,11 @@ mod Launchpad {
             self.set_token_selector(address_token_to_pay, selector);
         }
 
-   
-
         // CREATOR POOL
         // OWNER OF LAUNCHPAD
-
         fn create_launch(ref self: ContractState,
             asset:ContractAddress,
-            base_asset_token_address:ContractAddress,
+            quote_token_address:ContractAddress,
             total_amount:u256,
             token_received_per_one_base:u256,
             start_date:u64,
@@ -366,6 +403,9 @@ mod Launchpad {
             assert!(timestamp<start_date, "time < start_date");
             assert!(timestamp<end_date, "time < end_date");
             assert!(start_date<end_date, "start > end");
+
+            // TODO Different tokens
+            // assert!(asset != quote_token_address, "same token");
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
@@ -386,13 +426,8 @@ mod Launchpad {
             if self.is_paid_dollar_launch.read() {
 
                 let token_address= self.address_token_to_pay_launch.read();
-                // let selector_of_token=self.market_felt_by_asset.read(token_address);
-                // let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
-                // let price:u256=price_128.into();
-                // let dollar_to_pay=self.amount_paid_dollar_launch.read();
-                // let token_to_pay=dollar_to_pay/price;
-                let token_to_pay=self.get_amount_token_to_pay_launch();
-                IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract_address, token_to_pay);
+                let amount_token_to_pay=self.get_amount_token_to_pay_launch();
+                IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract_address, amount_token_to_pay);
 
             }
 
@@ -405,7 +440,7 @@ mod Launchpad {
                 owner:sender,
                 asset:asset,
                 broker:sender,
-                base_asset_token_address:base_asset_token_address,
+                quote_token_address:quote_token_address,
                 soft_cap:soft_cap,
                 is_canceled:false,
                 max_deposit_by_user:max_deposit_by_user,
@@ -428,7 +463,7 @@ mod Launchpad {
 
         fn create_launch_base_oracle(ref self: ContractState,
             asset:ContractAddress,
-            token_buy:ContractAddress,
+            quote_token_address:ContractAddress,
             total_amount:u256,
             start_date:u64,
             end_date:u64,
@@ -447,6 +482,9 @@ mod Launchpad {
             assert!(timestamp<end_date, "end_date too early");
             assert!(start_date<end_date, "start > end");
 
+            // TODO : Tokens check 
+            // assert!(asset != quote_token_address, "same token");
+
             let contract_address=get_contract_address();
             let sender=get_caller_address();
 
@@ -461,17 +499,15 @@ mod Launchpad {
                 remain_token_to_be_claimed:total_amount,
             };
 
-            // if self.is_paid_dollar_launch.read() {
+            // Add paid dollar by token set
+            // TODO paid dollar by token dollar
+            if self.is_paid_dollar_launch.read() {
 
-            //     let token_address= self.address_token_to_pay_launch.write();
-            //     let selector_of_token=self.market_felt_by_asset.read(token_address);
-            //     let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
-            //     let price:u256=price_128.into();
-            //     let dollar_to_pay=self.amount_paid_dollar_launch.write();
-            //     let token_to_pay=dollar_to_pay/price;
-            //     IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract, token_to_pay);
+                let token_address= self.address_token_to_pay_launch.read();
+                let amount_token_to_pay=self.get_amount_token_to_pay_launch();
+                IERC20Dispatcher{contract_address:token_address}.transfer_from(sender, contract_address, amount_token_to_pay);
 
-            // }
+            }
 
             let launch:Launch= Launch {
                 launch_id:current_id,
@@ -483,7 +519,7 @@ mod Launchpad {
                 owner:sender,
                 asset:asset,
                 broker:sender,
-                base_asset_token_address:token_buy,
+                quote_token_address:quote_token_address,
                 soft_cap:soft_cap,
                 is_canceled:false,
                 max_deposit_by_user:max_deposit_by_user,
@@ -510,22 +546,19 @@ mod Launchpad {
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
-            let owner = launch.owner;
-
             let mut launch= self.launchs.read(launch_id);
 
             // Verify owner 
+            let owner = launch.owner;
             assert!(sender == owner, "not owner");
-            assert!(launch.cancel, "already cancel");
+            assert!(!launch.is_canceled, "already cancel");
 
             // Check timestamp
             let timestamp=get_block_timestamp();
             assert!(timestamp<launch.end_date, "time < end_date");
 
             // Token back to owner
-            // IERC20Dispatcher{contract_address:launch.asset}.transfer(sender, launch.total_amount);
             IERC20Dispatcher{contract_address:launch.asset}.transfer(owner, launch.total_amount);
-            // ERC20ABIDispatcher{contract_address:launch.asset}.transfer(owner, launch.total_amount);
 
             // Update
             launch.is_canceled=true;
@@ -534,9 +567,31 @@ mod Launchpad {
             launch_id
         }
 
-        
+        // TODO add multi exchanges, fees and more 
+        // Launch liquidity 
+        // Send to V2 Jediswap swap 
+        fn launch_liquidity(ref self:ContractState, launch_id:u64) -> u64 {
 
-        
+            let contract_address=get_contract_address();
+            let sender=get_caller_address();
+            let mut launch= self.launchs.read(launch_id);
+
+            // Verify owner 
+            let owner = launch.owner;
+            assert!(sender == owner, "not owner");
+            assert!(!launch.is_canceled, "already cancel");
+
+            // Check timestamp
+            let timestamp=get_block_timestamp();
+            assert!(timestamp<launch.end_date, "time < end_date");
+
+            LaunchpadInternalImpl::_add_liquidity(ref self, launch);
+
+            launch_id
+
+
+        }
+
         // TODO Finish
         // REFUND OWNER
         fn refund_launch(
@@ -549,14 +604,13 @@ mod Launchpad {
             let owner= launch.owner;
 
             assert!(sender == owner, "not owner");
-
             let contract_address=get_contract_address();
             let timestamp= get_block_timestamp();
 
             assert!(timestamp<launch.end_date, "time < end_date");
 
-            IERC20Dispatcher { contract_address: launch.asset}.transfer(sender, launch.total_amount );
             // Update
+            IERC20Dispatcher { contract_address: launch.asset}.transfer(sender, launch.total_amount );
             launch.is_canceled=true;
             self.launchs.write(launch_id, launch);
 
@@ -583,7 +637,7 @@ mod Launchpad {
 
                 let refund= amount_deposit_by_user.deposited;
 
-                IERC20Dispatcher { contract_address: launch.base_asset_token_address}.transfer( sender, refund );
+                IERC20Dispatcher { contract_address: launch.quote_token_address}.transfer( sender, refund );
 
                 amount_deposit_by_user.deposited=0;
                 amount_deposit_by_user.refunded=refund;
@@ -616,10 +670,8 @@ mod Launchpad {
 
 
             // Add amount users
-
-
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
-            let base_asset_token_address= launch.base_asset_token_address;
+            let quote_token_address= launch.quote_token_address;
 
             // TODO check hard_cap and soft_cap
             // hard_cap
@@ -653,7 +705,9 @@ mod Launchpad {
                         // TODO better verification for oracle
                         // TODO token usd 
                         
-                        let selector_of_token=self.market_felt_by_asset.read(launch.asset);
+                        let selector_of_token=self.market_felt_by_asset.read(launch.quote_token_address);
+                        assert!(selector_of_token == 0_felt252, "token oracle undefined");
+
                         // let price = get_asset_price_average(selector_of_token);
                         let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
                         let price:u256=price_128.into();
@@ -679,7 +733,7 @@ mod Launchpad {
                         // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount:DepositByUser= DepositByUser {
-                            base_asset_token_address:launch.base_asset_token_address,
+                            quote_token_address:launch.quote_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,
                             owner:sender,
@@ -699,18 +753,18 @@ mod Launchpad {
                         // TODO add oracle or simple data to receive depends on amount 
 
                         // Oracle calculation
-                        // Per dollar calculation
-                        let selector_of_token=self.market_felt_by_asset.read(launch.asset);
+                        // Per dollar calculation with quote_token_address
+                        let selector_of_token=self.market_felt_by_asset.read(launch.quote_token_address);
+                        assert!(selector_of_token == 0_felt252, "token oracle undefined");
                         let price_u128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
                         let price:u256=price_u128.into();
-
                         let dollar_price_position= price*token_amount_base;
                         amount_to_receive=dollar_price_position*launch.token_per_dollar;
                         assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
                         // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
-                            base_asset_token_address:launch.base_asset_token_address,
+                            quote_token_address:launch.quote_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,
                             owner:sender,
@@ -734,7 +788,7 @@ mod Launchpad {
             launch.remain_balance-=amount_to_receive;
             launch.amounts.deposited+=token_amount_base;
             // Send token
-            IERC20Dispatcher {contract_address:base_asset_token_address}.transfer_from(sender, contract, token_amount_base);
+            IERC20Dispatcher {contract_address:quote_token_address}.transfer_from(sender, contract, token_amount_base);
 
             self.launchs.write(launch_id, launch);
             self.emit(EventDepositSend {id:launch_id, owner: sender, deposit:amount_deposit.clone()});
@@ -753,7 +807,6 @@ mod Launchpad {
             // Check timestamp
             let timestamp=get_block_timestamp();
             assert!(timestamp>launch.end_date, "launch not finish");
-            assert!(amount_deposit.deposited>0, "no buy");
 
             // Check is cancel 
             assert!(!launch.is_canceled, "launch cancel");
@@ -763,6 +816,7 @@ mod Launchpad {
             // assert!(launch.amounts.deposited>=launch.soft_cap, "soft_cap not reach");
 
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
+            assert!(amount_deposit.deposited>0, "no buy");
             assert!(amount_deposit.remain_token_to_be_claimed>0, "no remain balance");
             // Decrease amount
             // TODO
@@ -772,7 +826,7 @@ mod Launchpad {
                 // Send amount by claim 
                 let amount_to_send=amount_deposit.remain_token_to_be_claimed;
 
-                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer(amount_deposit.owner, amount_to_send );
+                IERC20Dispatcher{contract_address:launch.quote_token_address}.transfer(amount_deposit.owner, amount_to_send );
                 amount_deposit.remain_token_to_be_claimed=0;
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 
@@ -781,7 +835,7 @@ mod Launchpad {
                 // TODO : Oracle 
                 // Calculate price in dollar
                 let amount_to_send=amount_deposit.remain_token_to_be_claimed;
-                IERC20Dispatcher{contract_address:launch.base_asset_token_address}.transfer(amount_deposit.owner, amount_to_send );
+                IERC20Dispatcher{contract_address:launch.quote_token_address}.transfer(amount_deposit.owner, amount_to_send );
                 amount_deposit.remain_token_to_be_claimed=0;
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 

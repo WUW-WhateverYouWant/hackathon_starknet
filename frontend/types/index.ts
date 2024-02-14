@@ -85,7 +85,7 @@ export interface LaunchInterface {
   asset: string;
   cancelable: boolean;
   is_depleted: boolean;
-  was_canceled: boolean;
+  is_canceled: boolean;
   transferable: boolean;
   duration_cliff: number;
   duration_total;

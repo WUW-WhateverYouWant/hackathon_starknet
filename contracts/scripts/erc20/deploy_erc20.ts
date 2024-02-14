@@ -12,6 +12,7 @@ import {
 import fs, { read, readFileSync } from "fs";
 import dotenv from "dotenv";
 import path from "path"
+import { CLASS_HASH } from "../../config";
 // const PUBLIC_KEY = process.env.PUBLIC_KEY;
 // const PRIVATE_KEY = process.env.PUBLIC_KEY;
 dotenv.config();
@@ -65,34 +66,34 @@ async function main() {
   // Since we already have the classhash we will be skipping this part
   // Declare the contract
 
-  const ch = hash.computeSierraContractClassHash(compiledSierra);
-  console.log("Class hash calc =", ch);
-  const compCH = hash.computeCompiledClassHash(compiledCasm);
-  console.log("compiled class hash =", compCH);
-  const declareResponse = await account0.declare({
-    contract: compiledSierra,
-    casm: compiledCasm,
-  });
-  const contractClassHash = declareResponse.class_hash;
-  console.log("contractClassHash", contractClassHash)
+  // const ch = hash.computeSierraContractClassHash(compiledSierra);
+  // console.log("Class hash calc =", ch);
+  // const compCH = hash.computeCompiledClassHash(compiledCasm);
+  // console.log("compiled class hash =", compCH);
+  // const declareResponse = await account0.declare({
+  //   contract: compiledSierra,
+  //   casm: compiledCasm,
+  // });
+  // const contractClassHash = declareResponse.class_hash;
+  // console.log("contractClassHash", contractClassHash)
 
-  // Wait for the transaction to be confirmed and log the transaction receipt
-  const txR = await provider.waitForTransaction(
-    declareResponse.transaction_hash
-  );
+  // // Wait for the transaction to be confirmed and log the transaction receipt
+  // const txR = await provider.waitForTransaction(
+  //   declareResponse.transaction_hash
+  // );
   // console.log("tx receipt =", txR);
   //**************************************************************************************** */
 
   // const contractClassHash =
   //   "0x6012b224e2dc901c9461cb30d1c3aca01bbf5602ffc1da071c8aa6fa5e3b027";
 
-  // const contractClassHash= "0x1725c7f27dc2bf007ad9019c642c0f3a79a713ef14b42b6a3930eeb4974942f"
+  const contractClassHash= CLASS_HASH.ERC20_MINTABLE_SEPOLIA
 
   console.log("✅ Test Contract declared with classHash =", contractClassHash);
 
   console.log("Deploy of contract in progress...");
-  const name = cairo.felt("TESTOR")
-  const symbol = cairo.felt("TEST")
+  const name = cairo.felt("BIG_TOKEN")
+  const symbol = cairo.felt("BIG_TOKEN")
   const init_supply= cairo.uint256(1000)
   console.log("name", name);
   console.log("symbol", symbol);

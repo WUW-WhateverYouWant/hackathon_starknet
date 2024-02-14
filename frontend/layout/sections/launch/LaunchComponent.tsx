@@ -20,7 +20,7 @@ import { CONFIG_WEBSITE } from "../../../constants";
 import { buy_token } from "../../../hooks/launch/buy_token";
 import { cancel_launch } from "../../../hooks/launch/cancel_launch";
 import { withdraw_token } from "../../../hooks/launch/withdraw_token";
-import { LaunchComponent } from "./LaunchComponent";
+import { LaunchInteractions } from "./LaunchInteractions";
 
 interface ILaunchPageView {
   launch?: LaunchInterface;
@@ -29,7 +29,7 @@ interface ILaunchPageView {
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
+export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
   const startDateBn = Number(launch.start_date.toString());
   const startDate = new Date(startDateBn);
 
@@ -39,7 +39,7 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
-  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
+  const [amountToBuy, setAmountToBuy] = useState<Uint256  | undefined>(
     cairo.uint256(0)
     // 0
   );
@@ -76,20 +76,18 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
       <Box
         textAlign={"left"}
         maxW={{ base: "100%" }}
-        py={{ base: "0.5em" }}
         p={{ base: "1.5em", md: "1.5em" }}
-        maxWidth={{ lg: "750px" }}
         rounded={"1em"}
         overflow={"hidden"}
         // justifyContent={"space-between"}
         height={"100%"}
       >
         {/* <Text>Start Date: {startDate?.toString()}</Text> */}
-        <LaunchComponent launch={launch} id={id}></LaunchComponent>
+
         <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
 
-        <Box
-          display={{ md: "flex" }}
+        <Box 
+        display={{ md: "flex" }}
         >
           <Box>
             <Text>Start Date: {formatDateTime(startDate)}</Text>
@@ -155,74 +153,9 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
           </Box>
         </Box>
 
-        <Box
-          gap="1em"
-          justifyContent={"start"}
-          // justifyContent={"space-around"}
-          justifyItems={"left"}
-          justifySelf={"self-start"}
-          display={{ md: "grid" }}
-        >
-          {amountToBuy && Number(amountToBuy) > 0 && (
-            <Text>Amount to buy: {Number(amountToBuy)}</Text>
-          )}
-          <Input
-            py={{ base: "0.5em" }}
-            type="number"
-            my={{ base: "0.25em", md: "0.5em" }}
-            maxW={"fit-content"}
-            onChange={(e) => {
-              let str = String(Number(e?.target?.value) * 10 ** 18);
-              setAmountToBuy(cairo.uint256(parseInt(str)));
-              // setAmountToBuy(Number(e.target.value));
-            }}
-            placeholder="Amount to buy"
-          ></Input>
+        <LaunchInteractions launch={launch} id={id}></LaunchInteractions>
 
-          <Button
-            onClick={() =>
-              buy_token(
-                account,
-                launch?.launch_id ?? id,
-                // cairo.uint256(BigInt(amountToBuy.toString())),
-                amountToBuy,
-                feltToAddress(BigInt(launch?.asset))
-              )
-            }
-          >
-            Buy token
-          </Button>
-        </Box>
-        <Box
-          textAlign={"left"}
-          justifyContent={"start"}
-          px={{ base: "0.25em" }}
-          py={{ base: "0.25em" }}
-        >
-          <Box display={"grid"} justifyContent={"start"}>
-            {owner == address && (
-              <Box>
-                <Button
-                  onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
-
-            {owner != address && withdrawTo && !launch.is_canceled && (
-              <Box>
-                <Button
-                  onClick={() =>
-                    withdraw_token(account, launch?.launch_id ?? id)
-                  }
-                >
-                  Withdraw max
-                </Button>
-              </Box>
-            )}
-          </Box>
-        </Box>
+   
       </Box>
     </>
   );

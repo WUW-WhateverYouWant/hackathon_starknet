@@ -16,6 +16,7 @@ import {
 } from "../../../components/button/NavItem";
 import { CONFIG_WEBSITE } from "../../../constants";
 import { buy_token } from "../../../hooks/launch/buy_token";
+import { LaunchComponent } from "./LaunchComponent";
 
 interface IStreamCard {
   launch?: LaunchInterface;
@@ -23,7 +24,7 @@ interface IStreamCard {
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
+export const LaunchCard = ({ launch, viewType, }: IStreamCard) => {
   const startDateBn = Number(launch.start_date.toString());
   const startDate = new Date(startDateBn);
 
@@ -81,141 +82,8 @@ export const LaunchCard = ({ launch, viewType }: IStreamCard) => {
         border={"1px"}
         height={"100%"}
       >
-        {/* <Text>Start Date: {startDate?.toString()}</Text> */}
-        <Text>Start Date: {formatDateTime(startDate)}</Text>
-        <Text>End Date: {timeAgo(endDate)}</Text>
-        <Text>End Date: {formatDateTime(endDate)}</Text>
 
-        {launch?.was_canceled && (
-          <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-            Cancel <BiCheck color="red"></BiCheck>
-          </Box>
-        )}
-
-        {launch?.is_depleted && (
-          <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-            Depleted <BiCheckShield></BiCheckShield>
-          </Box>
-        )}
-
-        {launch?.amounts?.withdrawn && (
-          <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-            Withdraw <BiCheck></BiCheck>
-            <Box>{launch?.amounts?.withdrawn.toString()}</Box>
-          </Box>
-        )}
-
-        {/* {launch?.id && (
-          <Box>
-            launch id:{" "}
-            {shortString.decodeShortString(launch?.launch_id.toString())}
-          </Box>
-        )} */}
-
-        <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
-
-        <ExternalStylizedButtonLink
-          pb={{ base: "0.5em" }}
-          textOverflow={"no"}
-          href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${owner}`}
-        >
-          {/* <Text>{senderAddress}</Text> */}
-          <Text>Owner explorer</Text>
-        </ExternalStylizedButtonLink>
-
-        <Box>
-          <Text>Amount: {Number(total_amount) / 10 ** 18}</Text>
-
-          <Box display={{ base: "flex" }} gap={{ base: "0.5em" }}>
-            {launch?.amounts?.refunded && (
-              <Text>
-                Refunded {Number(launch.amounts?.refunded) / 10 ** 18}
-              </Text>
-            )}
-            {launch?.amounts?.withdrawn && (
-              <Text>
-                Withdraw {Number(launch.amounts?.withdrawn) / 10 ** 18}
-              </Text>
-            )}
-          </Box>
-        </Box>
-
-        <CardFooter textAlign={"left"}>
-          <Box>
-            {owner != address && withdrawTo && !launch.was_canceled && (
-              <Box>
-
-               
-              <Input
-                py={{ base: "0.5em" }}
-                type="number"
-                my={{ base: "0.25em", md: "0.5em" }}
-                onChange={(e) => {
-                  setAmountToBuy( cairo.uint256(parseInt(e?.target?.value)))
-                  // setAmountToBuy( parseInt(e?.target?.value))
-                    // broker_fee_nb: Number(e?.target?.value),
-                    // broker: {
-                    //   ...form.broker,
-                    //   fee: Number(e.target.value),
-                    // },
-                  
-                }}
-                placeholder="Max deposit per user"
-              ></Input>
-
-
-                <Button
-                onClick={() =>
-                  buy_token(
-                    account,
-                    launch?.launch_id,
-                    amountToBuy,
-                    launch?.asset
-                  )
-                }
-                >
-                  Buy token 
-                  
-                  
-                </Button>
-              </Box>
-            )}
-          </Box>
-          {owner == address && (
-            <Box>
-              <Button
-              // onClick={() =>
-              //   cancellaunch(
-              //     account,
-              //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
-              //       .lockupLinearFactory,
-              //     launch?.launch_id
-              //   )
-              // }
-              >
-                Cancel
-              </Button>
-            </Box>
-          )}
-
-          {owner != address && withdrawTo && !launch.was_canceled && (
-            <Box>
-              <Button
-              // onClick={() =>
-              //   withdraw_max(
-              //     account,
-              //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
-              //       .lockupLinearFactory,
-              //     launch?.launch_id,
-              //     withdrawTo
-              //   )
-              // }
-              >
-                Withdraw max
-              </Button>
-            </Box>
-          )}
-        </CardFooter>
+        <LaunchComponent launch={launch} ></LaunchComponent>
       </Card>
     </>
   );

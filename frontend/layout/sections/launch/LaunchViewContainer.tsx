@@ -138,8 +138,8 @@ export const LaunchViewContainer = () => {
         <TabPanels>
           <TabPanel>
             <RecipientLaunchComponent
-              launchsReceivedProps={launchsCreated}
-              setLaunchReceivedProps={setLaunchCreated}
+              launchsReceivedProps={launchs}
+              setLaunchReceivedProps={setLaunchs}
               setViewType={setViewType}
               viewType={viewType}
             ></RecipientLaunchComponent>
@@ -255,7 +255,7 @@ const SenderLaunchComponent = ({
             launchsCreated.map((s, i) => {
               console.log("s", s);
 
-              if (!s?.was_canceled) {
+              if (!s?.is_canceled) {
                 return (
                   <LaunchCard
                     launch={s}

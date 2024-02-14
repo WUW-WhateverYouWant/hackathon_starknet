@@ -9,7 +9,7 @@ struct Launch {
     asset:ContractAddress,
     owner: ContractAddress,
     broker: ContractAddress,
-    base_asset_token_address:ContractAddress,
+    quote_token_address:ContractAddress,
 
     // price_per_base:u256,
 
@@ -62,7 +62,7 @@ struct AmountLaunch {
 struct DepositByUser {
     launch_id:u64,
     owner: ContractAddress,
-    base_asset_token_address:ContractAddress,
+    quote_token_address:ContractAddress,
     total_amount: u256,
     /// The initial amount deposited in the stream, net of fees.
     deposited: u256,
@@ -121,6 +121,11 @@ struct SetJediwapV2Factory {
 }
 
 #[derive(Drop, starknet::Event)]
+struct SetJediwapNFTRouterV2 {
+    address_jediswap_nft_router_v2:ContractAddress,
+}
+
+#[derive(Drop, starknet::Event)]
 struct SetIsPaidDollarLaunch {
     is_paid_dollar_launch:bool,
 }
@@ -130,4 +135,12 @@ struct SetIsPaidDollarLaunch {
 struct SetAddressTokenToPayLaunch {
     address_token_to_pay_launch:ContractAddress,
 }
+
+
+#[derive(Drop, starknet::Event)]
+struct AddLiquidity {
+    launch_id:u64,
+    pool:ContractAddress,
+}
+
 

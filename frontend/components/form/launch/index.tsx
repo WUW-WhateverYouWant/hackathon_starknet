@@ -497,9 +497,12 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                 my={{ base: "0.25em", md: "0.5em" }}
                 aria-valuetext={String(form?.soft_cap)}
                 onChange={(e) => {
+                  let str = String(Number(e?.target?.value) * 10 ** 18);
+
                   setForm({
                     ...form,
-                    soft_cap: cairo.uint256(parseInt(e?.target?.value)),
+                    // soft_cap: cairo.uint256(parseInt(e?.target?.value)),
+                    soft_cap:cairo.uint256(parseInt(str)),
                   });
                 }}
                 placeholder="Soft cap"
@@ -510,10 +513,12 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                 type="number"
                 my={{ base: "0.25em", md: "0.5em" }}
                 onChange={(e) => {
+                  let str = String(Number(e?.target?.value) * 10 ** 18);
+
                   setForm({
                     ...form,
                     token_received_per_one_base: cairo.uint256(
-                      parseInt(e?.target?.value)
+                      parseInt(str)
                     ),
                     // broker_fee_nb: Number(e?.target?.value),
                     // broker: {

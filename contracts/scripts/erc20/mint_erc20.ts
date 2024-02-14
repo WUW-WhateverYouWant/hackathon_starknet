@@ -93,7 +93,9 @@ async function main() {
   console.log(" CONFIG_ADDRESS.ERC20_MINTABLE",  CONFIG_ADDRESS.ERC20_MINTABLE_SEPOLIA)
   console.log("account0?.address", account0?.address)
   // const init_supply= cairo.uint256(1000)
-  const mint_supply= cairo.uint256(100*10**18)
+  // const mint_supply= cairo.uint256(100*10**18)
+  const mint_supply= cairo.uint256(100)
+
   console.log("mint_supply", mint_supply)
 
   const mint = await tokenContract.mint(account0?.address,mint_supply)

@@ -8,7 +8,8 @@ use starknet::{
 
 use snforge_std::{
     declare, ContractClassTrait, start_prank, stop_prank, RevertedTransaction, CheatTarget,
-    TxInfoMock
+    TxInfoMock,
+    start_warp, stop_warp,
 };
 
 use core::traits::TryInto;
@@ -16,9 +17,6 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 use wuw_contracts::interfaces::erc20::{
     IERC20Dispatcher, IERC20DispatcherTrait
 };
-
-
-
 
 #[cfg(test)]
 mod test_launchpad {
@@ -222,7 +220,7 @@ mod test_launchpad {
         // let erc20_base=deploy_setup_erc20();
 
         let erc20= IERC20Dispatcher{contract_address:erc20_address};
-        let mut total_amount:u256 =1;
+        let mut total_amount:u256 = 1;
 
         erc20.approve(launchpad_address, total_amount);
         let launchpad = ILaunchpadDispatcher{contract_address:launchpad_address};
@@ -230,19 +228,32 @@ mod test_launchpad {
         // let start_date:u64=get_block_timestamp()+1000;
 
         let start_date:u64 = 1_707_851_123_736+5000;
-        let end_date:u64 =start_date+10_000;
+        let end_date:u64 =start_date+10000;
+        // let end_date:u64 =start_date+10_000;
+        // let start_date:u64 = 1000;
+        // let end_date:u64 =5000;
 
         println!("start_date {}", start_date);
         println!("end_date {}", end_date);
         let token_received_per_one_base:u256 =1;
         let soft_cap:u256 =1;
         let max_deposit_by_user:u256 = 1;
+        total_amount = 10;
+
 
         println!("create_launch");
+        // println!("erc20_address {}",erc20_address);
+        // println!("base_asset_token_address {}",base_asset_token_address);
+        // println!("total_amount {}",total_amount);
+        // println!("token_received_per_one_base {}",token_received_per_one_base);
+        // println!("soft_cap {}",soft_cap);
+        // println!("max_deposit_by_user {}",max_deposit_by_user);
+        start_prank(CheatTarget::One(launchpad_address), OWNER());
+       start_warp(CheatTarget::One(launchpad_address), 100);
 
         let launch_id= launchpad.create_launch(
-            erc20_address,
-            base_asset_token_address,
+            erc20_address.into(),
+            base_asset_token_address.into(),
             total_amount,
             token_received_per_one_base,
             start_date,
@@ -263,7 +274,7 @@ mod test_launchpad {
         erc20.approve(launchpad_address,total_amount);
         println!("try buy token");
 
-        let buy_position= launchpad.buy_token(
+        let buy_position = launchpad.buy_token(
             launch_id,
             total_amount,
         );

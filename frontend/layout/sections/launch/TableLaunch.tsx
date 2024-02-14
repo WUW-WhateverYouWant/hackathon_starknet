@@ -19,6 +19,7 @@ import {
 } from "../../../constants/address";
 import { formatDateTime, timeAgo } from "../../../utils/format";
 import { MdCancel } from "react-icons/md";
+import { LaunchInteractions } from "./LaunchInteractions";
 
 interface IStreamCard {
   launchs?: LaunchInterface[];
@@ -31,14 +32,14 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
   return (
     <Box overflowX={"auto"}>
       <Table overflow={"auto"} overflowX={"auto"}>
-        {viewType == LaunchCardView.RECIPIENT_VIEW && (
           <>
             <Thead>
               <Tr>
+              <Th>Token address</Th>
+
                 <Th>Owner</Th>
                 <Th>Actions</Th>
 
-                <Th>Token address</Th>
                 <Th>Amount deposit</Th>
                 <Th>Date</Th>
                 <Th>Status</Th>
@@ -47,16 +48,16 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
             </Thead>
             <Tbody>
               {launchs?.length > 0 &&
-                launchs.map((s, i) => {
-                  const sender = feltToAddress(BigInt(s?.owner));
-                  const asset = feltToAddress(BigInt(s?.asset));
-                  let total_amount = s?.amounts?.deposited;
-                  let total_withdraw = s?.amounts?.withdrawn;
-                  console.log("s", s);
-                  const startDateBn = Number(s.start_date.toString());
+                launchs.map((l, i) => {
+                  const sender = feltToAddress(BigInt(l?.owner));
+                  const asset = feltToAddress(BigInt(l?.asset));
+                  let total_amount = l?.amounts?.deposited;
+                  let total_withdraw = l?.amounts?.withdrawn;
+                  console.log("s", l);
+                  const startDateBn = Number(l.start_date.toString());
                   const startDate = new Date(startDateBn);
 
-                  const endDateBn = Number(s.end_date.toString());
+                  const endDateBn = Number(l.end_date.toString());
                   const endDate = new Date(endDateBn);
 
                   return (
@@ -64,15 +65,16 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                       height={{ base: "100%" }}
 
                     >
-                      <Td>
-                        {sender?.slice(0, 10)} ...
-                        {sender?.slice(sender?.length - 10, sender?.length)}{" "}
+                          <Td>
+                        {asset?.slice(0, 10)} ...
+                        {asset?.slice(asset?.length - 10, asset?.length)}{" "}
                       </Td>
                       <Box
                         gap={{ base: "1em" }}
                       >
                         <Td
                           w={"100%"}>
+                          <LaunchInteractions launch={l}></LaunchInteractions>
                           <Button
                             width={"100%"}
                             my={{ base: "0.15em" }}>Withdraw</Button>
@@ -80,9 +82,11 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                         </Td>
                       </Box>
                       <Td>
-                        {asset?.slice(0, 10)} ...
-                        {asset?.slice(asset?.length - 10, asset?.length)}{" "}
+                        {sender?.slice(0, 10)} ...
+                        {sender?.slice(sender?.length - 10, sender?.length)}{" "}
                       </Td>
+                
+                  
                       <Td>{Number(total_amount?.toString()) / 10 ** 18}</Td>
                       <Td
                         display={"flex"}
@@ -97,10 +101,10 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                         </Text>
 
                       </Td>
-                      <Td>{s.was_canceled && <Text >Cancel: <MdCancel></MdCancel>
+                      <Td>{l.is_canceled && <Text >Cancel: <MdCancel></MdCancel>
                       </Text>}
 
-                        {!s.was_canceled &&
+                        {!l.is_canceled &&
 
                           <Text> {endDate.getTime() > new Date().getTime() ?
                             `Claimable in : ${timeAgo(endDate)}`
@@ -124,66 +128,7 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
             </Tbody>
 
           </>
-        )}
-        {viewType == LaunchCardView.SENDER_VIEW && (
-          <>
-            <Thead>
-              <Tr>
-                {/* <Th>Sender</Th> */}
-                <Th>Token address</Th>
-                <Th>Amount deposit</Th>
-                <Th>Withdraw</Th>
-                <Th>Recipient</Th>
-                <Th>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {launchs?.length > 0 &&
-                launchs.map((s, i) => {
-                  const sender = feltToAddress(BigInt(s?.owner));
-                  const recipient = feltToAddress(BigInt(s?.recipient));
-                  const asset = feltToAddress(BigInt(s?.asset));
-                  let total_amount = s?.amounts?.deposited;
-                  let total_withdraw = s?.amounts?.withdrawn;
-                  console.log("s", s);
-                  return (
-                    <tr key={i}>
-                      <Td>
-                        {sender?.slice(0, 10)} ...
-                        {sender?.slice(
-                          sender?.length - 10,
-                          sender?.length
-                        )}{" "}
-                      </Td>
-                      <Td>
-                        {asset?.slice(0, 10)} ...
-                        {asset?.slice(asset?.length - 10, asset?.length)}{" "}
-                      </Td>
-                      <Td>{Number(total_amount?.toString()) / 10 ** 18}</Td>
-                      <Td>{Number(total_withdraw?.toString()) / 10 ** 18}</Td>
-                      <Box>
-                        <Td>
-                          <Button
-                            // onClick={() => {
-                            //   cancelStream(
-                            //     account,
-                            //     CONTRACT_DEPLOYED_STARKNET[DEFAULT_NETWORK]
-                            //       .lockupLinearFactory,
-                            //     s?.stream_id
-                            //   );
-                            // }}
-                          >
-                            Cancel
-                          </Button>
-                        </Td>
-                      </Box>
-                    </tr>
-                  );
-                  // }
-                })}
-            </Tbody>
-          </>
-        )}
+     
       </Table>
     </Box>
   );
