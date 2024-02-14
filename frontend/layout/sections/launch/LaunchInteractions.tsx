@@ -82,6 +82,7 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
             type="number"
             my={{ base: "0.25em", md: "0.5em" }}
             maxW={"fit-content"}
+            minW={{ base: "100px", md: "150px" }}
             onChange={(e) => {
               let str = String(Number(e?.target?.value) * 10 ** 18);
               setAmountToBuy(cairo.uint256(parseInt(str)));
@@ -91,6 +92,8 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
           ></Input>
 
           <Button
+            // bg="transparent"
+            width={"100%"}
             onClick={() =>
               buy_token(
                 account,
@@ -106,39 +109,23 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
 
           <Button
             width={"100%"}
-            my={{ base: "0.15em" }}
+            // bg="transparent"
+            // my={{ base: "0.15em" }}
             onClick={() => withdraw_token(account, launch?.launch_id ?? id)}
-            >Withdraw</Button>
+          >Withdraw</Button>
         </Box>
-        <Box
-          textAlign={"left"}
-          justifyContent={"start"}
-          px={{ base: "0.25em" }}
-          py={{ base: "0.25em" }}
-        >
-          <Box display={"grid"} justifyContent={"start"}>
-            {owner == address && (
-              <Box>
-                <Button
-                  onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
 
-            {owner != address && withdrawTo && !launch.is_canceled && (
-              <Box>
-                <Button
-                  onClick={() =>
-                    withdraw_token(account, launch?.launch_id ?? id)
-                  }
-                >
-                  Withdraw max
-                </Button>
-              </Box>
-            )}
-          </Box>
+        <Box display={"grid"} justifyContent={"start"}>
+          {owner == address && (
+
+            <Button
+              bg="transparent"
+              onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
+            >
+              Cancel
+            </Button>
+
+          )}
         </Box>
       </Box>
     </>

@@ -17,3 +17,23 @@ struct MintParams {
     deadline: u64,
    
 }
+
+#[derive( Drop, Copy, starknet::Store, Serde )]
+struct IncreaseLiquidityParams {
+    token_id:u256,
+    amount0_desired:u256,
+    amount1_desired:u256,
+    amount0_min:u256,
+    amount1_min:u256,
+    deadline: u64,
+}
+
+#[derive( Drop, Copy, starknet::Store, Serde )]
+struct DecreaseLiquidityParams {
+    token_id:u256,
+    liquidity:u128,
+    amount0_min:u256,
+    amount1_min:u256,
+    deadline: u64,
+}
+

@@ -55,9 +55,6 @@ struct AmountLaunch {
     total_token_to_be_claimed:u256,
 }
 
-
-
-
 #[derive( Drop, Copy, starknet::Store, Serde )]
 struct DepositByUser {
     launch_id:u64,
@@ -79,7 +76,26 @@ struct DepositByUser {
     total_token_to_be_claimed:u256,
 }
 
+#[derive( Drop, Copy, starknet::Store, Serde )]
+struct LiquidityParams {
+    launch_id:u64,
+    pool:ContractAddress,
+    asset: ContractAddress,
+    quote_token_address:ContractAddress,
+    token_id:u256,
+    owner:ContractAddress
+}
 
+#[derive(Drop, starknet::Event)]
+struct LiquidityCreated {
+    // #[key]
+    id:u64,
+    pool:ContractAddress,
+    asset: ContractAddress,
+    quote_token_address:ContractAddress,
+    token_id:u256,
+    owner:ContractAddress
+}
 
 #[derive(Drop, starknet::Event)]
 struct LaunchCreated {

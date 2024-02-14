@@ -79,6 +79,7 @@ export interface CreateRangeProps {
 /** Contract interface */
 export interface LaunchInterface {
   launch_id?: number;
+  quote_token_address:string;
   owner: string;
   recipient: string;
   total_amount: number;
@@ -91,6 +92,11 @@ export interface LaunchInterface {
   duration_total;
   start_date?: number;
   end_date?: number;
+  soft_cap?:number;
+  token_per_dollar?:number;
+  token_received_per_one_base?:number;
+  remain_balance?:number;
+  max_deposit_by_user?:number;
   // start_time?: number;
   // end_time?: number;
   range: Range;
@@ -113,25 +119,6 @@ export interface DepositByUser {
   remain_token_to_be_claimed: Uint256;
   total_token_to_be_claimed: Uint256;
 }
-
-// export interface LockupLinearStreamInterface {
-//   stream_id?: number;
-//   sender: string;
-//   recipient: string;
-//   total_amount: number;
-//   asset: string;
-//   cancelable: boolean;
-//   is_depleted: boolean;
-//   was_canceled: boolean;
-//   transferable: boolean;
-//   duration_cliff: number;
-//   duration_total;
-//   start_time?: number;
-//   end_time?: number;
-//   range: Range;
-//   broker: Broker;
-//   amounts?: LockupAmounts
-// }
 
 export interface LockupAmounts {
   deposited: number;

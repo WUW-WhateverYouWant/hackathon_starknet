@@ -95,6 +95,9 @@ mod Launchpad {
         SetJediwapNFTRouterV2,
         AddLiquidity
     };
+    use wuw_contracts::types::jediswap:: {
+      MintParams
+    };
 
     use wuw_contracts::interfaces::erc20::{
       IERC20Dispatcher,
@@ -262,32 +265,71 @@ mod Launchpad {
         ){
 
             let contract_address=get_contract_address();
-            let sender=get_caller_address();
-
             let factory_address = self.address_jediswap_factory_v2.read();
-            let router_address =  self.address_jediswap_nft_router_v2.read();
+            let nft_router_address =  self.address_jediswap_nft_router_v2.read();
 
-            // Look if pool already exist 
-            // Init and Create pool if not exist 
             let fee:u32 = 10_000;
             let factory = IJediswapFactoryV2Dispatcher {contract_address:factory_address};
+            let nft_router = IJediswapNFTRouterV2Dispatcher {contract_address:nft_router_address};
+
             let token_a = launch.asset;
             let token_b= launch.quote_token_address;
             // TODO tokens check 
             // assert!(token_a != token_b, "same token");
-
+            // Look if pool already exist 
+            // Init and Create pool if not exist 
             let mut pool:ContractAddress = factory.get_pool(token_a, token_b, fee);
+            let sqrt_price_X96=0; // TODO change sqrt_price_X96
 
             // TODO check if pool exist 
             // Pool need to be create
+            
+            let amount0_desired=0;
+            let amount1_desired=0;
+            let amount0_min=0;
+            let amount1_min=0;
+            let tick_lower:i32=0;
+            let tick_upper:i32=0;
+            let deadline:u64= get_block_timestamp();
+
             if pool.into() == 0_felt252 {
                 pool = factory.create_pool(token_a,token_b, fee);
-            } 
-          
-            // TODO Increase liquidity with router if exist
-            // Approve token to be transfered
-            // let token_quote = IERC20Dispatcher {contract_address:token_b};
-            let router = IJediswapNFTRouterV2Dispatcher {contract_address:router_address};
+                pool= nft_router.create_and_initialize_pool(token_a, token_b, fee, sqrt_price_X96);
+                // TODO Increase liquidity with router if exist
+                // Approve token asset and quote to be transfered
+                let token_asset = IERC20Dispatcher {contract_address:token_a};
+                let token_quote = IERC20Dispatcher {contract_address:token_b};
+                token_asset.approve(nft_router_address, launch.total_amount);
+                token_quote.approve(nft_router_address, launch.amounts.deposited);
+
+                let mint_params = MintParams {
+                    token0:token_a,
+                    token1:token_b,
+                    fee:fee,
+                    tick_lower:tick_lower,
+                    tick_upper:tick_upper,
+                    amount0_desired:amount0_desired,
+                    amount1_desired:amount1_desired,
+                    amount0_min:amount0_min,
+                    amount1_min:amount1_min,
+                    recipient:launch.owner, // TODO add 
+                    deadline:deadline,
+                };
+
+                let (token_id, _, _, _) = nft_router.mint(mint_params);
+
+                self.emit( LiquidityCreated {
+                    id:launch.launch_id,
+                    pool:pool,
+                    quote_token_address,
+                    token_id:token_id,
+                    owner:launch.owner
+                });
+                
+            } else {
+                // TODO 
+                // Increase liquidity of this pool.
+            }
 
         }
 
@@ -405,7 +447,7 @@ mod Launchpad {
             assert!(start_date<end_date, "start > end");
 
             // TODO Different tokens
-            // assert!(asset != quote_token_address, "same token");
+            assert!(asset != quote_token_address, "same token");
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();
@@ -483,7 +525,7 @@ mod Launchpad {
             assert!(start_date<end_date, "start > end");
 
             // TODO : Tokens check 
-            // assert!(asset != quote_token_address, "same token");
+            assert!(asset != quote_token_address, "same token");
 
             let contract_address=get_contract_address();
             let sender=get_caller_address();

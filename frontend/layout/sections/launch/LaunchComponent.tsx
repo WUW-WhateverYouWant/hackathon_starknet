@@ -82,10 +82,7 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
         // justifyContent={"space-between"}
         height={"100%"}
       >
-        {/* <Text>Start Date: {startDate?.toString()}</Text> */}
-
         <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
-
         <Box 
         display={{ md: "flex" }}
         >

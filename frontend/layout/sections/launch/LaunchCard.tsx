@@ -1,21 +1,11 @@
-import { Box, Card, Text, Button, CardFooter, Input } from "@chakra-ui/react";
+import {  Card, } from "@chakra-ui/react";
 import { LaunchInterface, LaunchCardView } from "../../../types";
-import { Uint256, cairo, shortString, stark, validateAndParseAddress } from "starknet";
-import { feltToAddress, feltToString } from "../../../utils/starknet";
+import { Uint256, cairo, } from "starknet";
+import { feltToAddress} from "../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
-import {
-  CONTRACT_DEPLOYED_STARKNET,
-  DEFAULT_NETWORK,
-} from "../../../constants/address";
+
 import { useEffect, useState } from "react";
-import { formatDateTime, formatRelativeTime } from "../../../utils/format";
-import { BiCheck, BiCheckShield } from "react-icons/bi";
-import {
-  ExternalStylizedButtonLink,
-  ExternalTransparentButtonLink,
-} from "../../../components/button/NavItem";
-import { CONFIG_WEBSITE } from "../../../constants";
-import { buy_token } from "../../../hooks/launch/buy_token";
+
 import { LaunchComponent } from "./LaunchComponent";
 
 interface IStreamCard {
@@ -82,7 +72,6 @@ export const LaunchCard = ({ launch, viewType, }: IStreamCard) => {
         border={"1px"}
         height={"100%"}
       >
-
         <LaunchComponent launch={launch} ></LaunchComponent>
       </Card>
     </>

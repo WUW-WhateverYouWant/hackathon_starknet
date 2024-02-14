@@ -11,8 +11,7 @@ mod launchpad {
 
 mod types {
     mod launch;
-
-
+    mod jediswap;
 }
 mod pragma {
     mod oracle;

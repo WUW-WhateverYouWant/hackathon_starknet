@@ -4,6 +4,11 @@ use starknet::{
         ContractAddressIntoFelt252
 };
 
+use wuw_contracts::types::jediswap:: {
+    MintParams,
+    IncreaseLiquidityParams
+};
+
 
 #[starknet::interface]
 trait IJediswapV1<TState> {
@@ -49,8 +54,9 @@ trait IJediswapNFTRouterV2<TState> {
     // ************************************
 
     // Write 
-    fn mint(ref self:TState, token_id:u256, token_b:ContractAddress, fee:u32)-> (u256, u128, u256, u256);
-    fn create_and_initialize_pool(ref self:TState, token0:u256, token1:ContractAddress, fee:u32, sqrt_price_X96:u256)-> ContractAddress;
+    fn mint(ref self:TState, mint:MintParams)-> (u256, u128, u256, u256);
+    fn create_and_initialize_pool(ref self:TState, token0:ContractAddress, token1:ContractAddress, fee:u32, sqrt_price_X96:u256)-> ContractAddress;
+    // fn mint(ref self:TState, token_id:u256, token_b:ContractAddress, fee:u32)-> (u256, u128, u256, u256);
 
     // Views
     fn get_position(self:@TState, token_id:u256, token_b:ContractAddress, fee:u32)-> ContractAddress;
