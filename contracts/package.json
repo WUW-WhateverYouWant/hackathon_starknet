@@ -16,7 +16,8 @@
     "transfer:erc20":"nodemon transfer_erc20.ts",
     "deploy:nft":"nodemon ./scripts/erc721/deploy_nft_metadata.ts",
     "mint:erc20":"nodemon ./scripts/erc20/mint_erc20.ts",
-    "deploy:launch":"nodemon ./scripts/launchpad/00_deploy_launchpad.ts"
+    "deploy:launch":"nodemon ./scripts/launchpad/00_deploy_launchpad.ts",
+    "admin:launch":"nodemon ./scripts/launchpad/01_set_admin_params.ts"
     
 
   },

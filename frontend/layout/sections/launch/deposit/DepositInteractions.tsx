@@ -3,6 +3,7 @@ import { LaunchCardView, DepositByUser } from "../../../../types";
 import {
   Uint256,
   cairo,
+  uint256,
 } from "starknet";
 import { feltToAddress, feltToString } from "../../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
@@ -70,7 +71,22 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
             minW={{ base: "100px", md: "150px" }}
             onChange={(e) => {
               let str = String(Number(e?.target?.value) * 10 ** 18);
-              setAmountToBuy(cairo.uint256(parseInt(str)));
+              // setAmountToBuy(cairo.uint256(parseInt(str)));
+
+              // let str = String(Number(e?.target?.value));
+              let total_amount:Uint256=cairo.uint256(0);
+              let total_amount_nb=Number(e.target.value);
+              if (Number.isInteger(total_amount_nb)) {
+                total_amount = cairo.uint256(str);
+              } else if (!Number.isInteger(total_amount_nb)) {
+                // total_amount=total_amount_nb
+                total_amount = uint256.bnToUint256(BigInt(str));
+              }
+  
+              // setAmountToBuy(cairo.uint256(str));
+              setAmountToBuy(total_amount);
+
+
               // setAmountToBuy(Number(e.target.value));
             }}
             placeholder="Amount to buy"
@@ -95,11 +111,13 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
 
           <Button
             width={"100%"}
+            my={{ base: "0.25em" }}
             // bg="transparent"
             // my={{ base: "0.15em" }}
             onClick={() => withdraw_token(account, deposit?.launch_id ?? id)}
           >Withdraw</Button>
           <Button
+            w={"100%"}
             // bg="transparent"
             onClick={() => refund_deposit_amount(account, deposit?.launch_id ?? id)}
           >
@@ -108,7 +126,7 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
         </Box>
 
         <Box display={"grid"} justifyContent={"start"}>
-      
+
         </Box>
       </Box>
     </>

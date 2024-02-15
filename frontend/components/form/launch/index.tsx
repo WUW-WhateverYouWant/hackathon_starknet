@@ -417,8 +417,8 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
         <Box py={{ base: "1em" }}>
           <ExternalStylizedButtonLink
             href={`${CHAINS_NAMES.GOERLI == networkName.toString()
-                ? CONFIG_WEBSITE.page.goerli_voyager_explorer
-                : CONFIG_WEBSITE.page.voyager_explorer
+              ? CONFIG_WEBSITE.page.goerli_voyager_explorer
+              : CONFIG_WEBSITE.page.voyager_explorer
               }/tx/${txHash}`}
           >
             <VoyagerExplorerImage></VoyagerExplorerImage>
@@ -441,6 +441,13 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
             Basic details
           </Text>
 
+        
+
+
+          <Text textAlign={"left"}
+          >
+            Total amount of token to sell
+          </Text>
           <Input
             my={{ base: "0.25em", md: "0.5em" }}
             py={{ base: "0.5em" }}
@@ -450,6 +457,11 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
               setForm({ ...form, total_amount: Number(e.target.value) });
             }}
           ></Input>
+
+<Text textAlign={"left"}
+          >
+            Asset
+          </Text>
 
           {TypeCreationLaunch.CREATE_LAUNCH == typeLaunchCreation && (
             <Input
@@ -477,7 +489,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
 
           <Box height={"100%"}>
             <Box>
-              <Text textAlign={"left"}>Base asset</Text>
+              <Text textAlign={"left"}>Base/Quote token asset</Text>
               <Input
                 my={{ base: "0.25em", md: "0.5em" }}
                 py={{ base: "0.5em" }}
@@ -488,67 +500,10 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                     base_asset_token_address: e.target.value,
                   });
                 }}
-                placeholder="Base token address"
+                placeholder="Base/Quote token address"
               ></Input>
 
-              <Input
-                py={{ base: "0.5em" }}
-                type="number"
-                my={{ base: "0.25em", md: "0.5em" }}
-                aria-valuetext={String(form?.soft_cap)}
-                onChange={(e) => {
-                  let str = String(Number(e?.target?.value) * 10 ** 18);
 
-                  setForm({
-                    ...form,
-                    // soft_cap: cairo.uint256(parseInt(e?.target?.value)),
-                    soft_cap:cairo.uint256(parseInt(str)),
-                  });
-                }}
-                placeholder="Soft cap"
-              ></Input>
-
-              <Input
-                py={{ base: "0.5em" }}
-                type="number"
-                my={{ base: "0.25em", md: "0.5em" }}
-                onChange={(e) => {
-                  let str = String(Number(e?.target?.value) * 10 ** 18);
-
-                  setForm({
-                    ...form,
-                    token_received_per_one_base: cairo.uint256(
-                      parseInt(str)
-                    ),
-                    // broker_fee_nb: Number(e?.target?.value),
-                    // broker: {
-                    //   ...form.broker,
-                    //   fee: Number(e.target.value),
-                    // },
-                  });
-                }}
-                placeholder="Token receive per base token"
-              ></Input>
-
-              <Input
-                py={{ base: "0.5em" }}
-                type="number"
-                my={{ base: "0.25em", md: "0.5em" }}
-                onChange={(e) => {
-                  setForm({
-                    ...form,
-                    max_deposit_by_user: cairo.uint256(
-                      parseInt(e?.target?.value)
-                    ),
-                    // broker_fee_nb: Number(e?.target?.value),
-                    // broker: {
-                    //   ...form.broker,
-                    //   fee: Number(e.target.value),
-                    // },
-                  });
-                }}
-                placeholder="Max deposit per user"
-              ></Input>
 
               <Box display={{ base: "flex" }} gap={{ base: "5em" }}>
                 <Box>
@@ -635,7 +590,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
           w={{ base: "100%", md: "fit-content" }}
         >
           <Text textAlign={"left"} fontFamily={"PressStart2P"}>
-            Range date ⏳
+          Launchpad Details 
           </Text>
           <Box
             height={"100%"}
@@ -644,6 +599,85 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
             p={{ base: "1em" }}
             borderRadius={{ base: "5px" }}
           >
+
+
+            <Text textAlign={"left"}
+            >
+              Soft cap
+            </Text>
+
+            <Input
+              py={{ base: "0.5em" }}
+              type="number"
+              my={{ base: "0.25em", md: "0.5em" }}
+              aria-valuetext={String(form?.soft_cap)}
+              onChange={(e) => {
+                let str = String(Number(e?.target?.value) * 10 ** 18);
+
+                setForm({
+                  ...form,
+                  // soft_cap: cairo.uint256(parseInt(e?.target?.value)),
+                  soft_cap: cairo.uint256(parseInt(str)),
+                });
+              }}
+              placeholder="Soft cap"
+            ></Input>
+
+
+            <Text textAlign={"left"}
+            >
+              Token receive per base token
+            </Text>
+            <Input
+              py={{ base: "0.5em" }}
+              type="number"
+              my={{ base: "0.25em", md: "0.5em" }}
+              onChange={(e) => {
+                let str = String(Number(e?.target?.value) * 10 ** 18);
+
+                setForm({
+                  ...form,
+                  token_received_per_one_base: cairo.uint256(
+                    parseInt(str)
+                  ),
+                  // broker_fee_nb: Number(e?.target?.value),
+                  // broker: {
+                  //   ...form.broker,
+                  //   fee: Number(e.target.value),
+                  // },
+                });
+              }}
+              placeholder="Token receive per base token"
+            ></Input>
+
+            <Text textAlign={"left"}>
+
+              Max deposit per user
+            </Text>
+            <Input
+              py={{ base: "0.5em" }}
+              type="number"
+              my={{ base: "0.25em", md: "0.5em" }}
+              onChange={(e) => {
+                setForm({
+                  ...form,
+                  max_deposit_by_user: cairo.uint256(
+                    parseInt(e?.target?.value)
+                  ),
+                  // broker_fee_nb: Number(e?.target?.value),
+                  // broker: {
+                  //   ...form.broker,
+                  //   fee: Number(e.target.value),
+                  // },
+                });
+              }}
+              placeholder="Max deposit per user"
+            ></Input>
+
+            <Text textAlign={"left"} fontFamily={"PressStart2P"}>
+              Date ⏳
+            </Text>
+
             <Box>
               <Text
                 textAlign={"left"}
@@ -695,13 +729,11 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
             </Box>
 
           </Box>
+
         </Box>
       </Box>
 
       <Box>
-        <Text py={{ base: "0.1em" }} textAlign={{ base: "left" }}>
-          Choose your type of launch to create
-        </Text>
 
         <Box
           textAlign={"center"}
@@ -719,7 +751,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                 );
               }}
             >
-              Create launch with base token ⏳
+              Create launch with base token
             </Button>
           ) : (
             <Button

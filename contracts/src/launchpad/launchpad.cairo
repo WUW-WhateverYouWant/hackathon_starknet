@@ -210,6 +210,7 @@ mod Launchpad {
         address_jediswap_factory_v2:ContractAddress,
         address_jediswap_nft_router_v2:ContractAddress,
         market_felt_by_asset:LegacyMap::<ContractAddress, felt252>,
+        tokens_selectors:LegacyMap::<ContractAddress, felt252>,
 
         // Fees management
         protocol_fee_launch_creation:u8,
@@ -219,7 +220,6 @@ mod Launchpad {
         address_token_to_pay_launch:ContractAddress,
         is_tokens_address_paid_launch_enable:LegacyMap::<ContractAddress, bool>,
         tokens_oracle_pair_market_dollar:LegacyMap::<ContractAddress, felt252>,
-        tokens_selectors:LegacyMap::<ContractAddress, felt252>,
         
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -412,6 +412,7 @@ mod Launchpad {
         fn set_token_selector(ref self:ContractState, address:ContractAddress, selector:felt252) {
             self.accesscontrol.assert_only_role(ADMIN_ROLE);
             self.tokens_selectors.write(address, selector);
+            self.market_felt_by_asset.write(address, selector;)
         }
 
 
@@ -688,14 +689,26 @@ mod Launchpad {
             if amount_deposit_by_user.deposited> 0 {
 
                 let refund= amount_deposit_by_user.deposited;
-
-                IERC20Dispatcher { contract_address: launch.quote_token_address}.transfer( sender, refund );
+                let remain_token_to_be_claimed= amount_deposit_by_user.remain_token_to_be_claimed
 
                 amount_deposit_by_user.deposited=0;
                 amount_deposit_by_user.refunded=refund;
 
+                amount_deposit_by_user.remain_token_to_be_claimed=0;
+                amount_deposit_by_user.total_token_to_be_claimed=0;
+                amount_deposit_by_user.is_canceled=true;
+
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit_by_user);
-                self.emit(RefundBuyToken { asset_refund: launch.asset, amount_refund:refund})
+
+                // TODO readd remain balance
+                launch.amounts.deposited-=refund;
+                launch.remain_balance+=remain_token_to_be_claimed;
+
+                IERC20Dispatcher { contract_address: launch.quote_token_address}.transfer( sender, refund );
+
+                self.launchs.write(launch_id, launch);
+
+                self.emit(RefundBuyToken { asset_refund: launch.asset, amount_refund:refund});
 
             }
 
@@ -720,6 +733,9 @@ mod Launchpad {
             // Check is cancel 
             assert!(!launch.is_canceled, "launch cancel");
 
+
+            // Verify amount 
+            assert!(token_amount_base>0, "increase token base");
 
             // Add amount users
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));

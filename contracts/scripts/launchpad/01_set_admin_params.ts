@@ -86,30 +86,62 @@ async function main() {
 
 
   const contractClassHash = CLASS_HASH.LAUNCHPAD
-  console.log("Deploy of contract in progress...");
-  const nonce = await account0.getNonce();
-  
+  let nonce = await account0.getNonce();
+  console.log("nonce", nonce)
   const launchpadContract = new Contract(compiledSierra.abi, CONFIG_ADDRESS.LAUNCHPAD, account0)
 
   // Set oracle pragma address 
-  let pragma_address=CONFIG_ADDRESS.PRAGMA_ORACLE_SEPOLIA
- 
+  let pragma_address = CONFIG_ADDRESS.PRAGMA_ORACLE_SEPOLIA
+
   const set_pragma_address = await launchpadContract.set_pragma_address(pragma_address)
   // set jediwap factory
-  let factory_jediswap_v2=CONFIG_ADDRESS.JEDIWAP_FACTORY_SEPOLIA_V2
+  let factory_jediswap_v2 = CONFIG_ADDRESS.JEDIWAP_FACTORY_V2_SEPOLIA
 
   const set_jediswap_v2 = await launchpadContract.set_address_jediswap_factory_v2(factory_jediswap_v2)
+
+
+  let nft_jediswap_v2 = CONFIG_ADDRESS.JEDISWAP_NFT_ROUTER_V2_SEPOLIA
+
+  const set_jediswap_nft_router_v2 = await launchpadContract.set_address_jediswap_nft_router_v2(nft_jediswap_v2)
+
   // Set fees
   let is_paid_dollar = true;
   let address_token_to_pay = TOKENS_ADDRESS.ETH;
   let amount_to_paid_dollar_launch = cairo.uint256(10);
-  let selector= shortString.encodeShortString("ETH/USD");
- 
+  let selector = shortString.encodeShortString("ETH/USD");
+
   const set_fees = await launchpadContract.set_params_fees(is_paid_dollar,
     address_token_to_pay,
     amount_to_paid_dollar_launch,
-    selector)
+    selector,
+    // { nonce: nonce }
+  )
+  console.log("set oracle")
+
+  const set_oracle_base_asset = await launchpadContract.set_oracle_base_asset(
+    address_token_to_pay,
+    true,
+    // { nonce: nonce }
+  )
+  console.log("set_is_paid_dollar_launch")
+
+  const set_is_paid_dollar_launch= await launchpadContract.set_is_paid_dollar_launch(true, );
+  console.log("set token selector")
+
+   nonce = await account0.getNonce();
+  console.log("nonce", nonce)
+  const set_token_selector = await launchpadContract.set_token_selector(
+    address_token_to_pay,
+    selector,
+    { nonce: nonce }
+
+  )
+  // console.log("Admin process setup.", set_fees);
+
+  // await provider.waitForTransaction(set_fees);
   console.log("✅ Admin process setup fees.");
+
+
 
   // Wait for the deployment transaction to be confirmed
 

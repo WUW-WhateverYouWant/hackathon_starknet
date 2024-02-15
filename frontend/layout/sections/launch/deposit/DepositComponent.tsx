@@ -29,7 +29,7 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
-  const [amountToBuy, setAmountToBuy] = useState<Uint256  | undefined>(
+  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
     cairo.uint256(0)
     // 0
   );
@@ -60,6 +60,13 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
       return `${days} day${days > 1 ? "s" : ""} ago`;
     }
   }
+  const asset = deposit?.asset && feltToAddress(BigInt(deposit?.asset));
+  const quote_address = deposit?.quote_token_address ? feltToAddress(BigInt(deposit?.quote_token_address)) : "0x";
+  let total_amount = deposit?.deposited;
+  let remain_token_to_be_claimed = deposit?.remain_token_to_be_claimed;
+  let total_token_to_be_claimed = deposit?.total_token_to_be_claimed;
+  let total_withdraw = deposit?.withdrawn;
+  console.log("deposit", deposit);
   return (
     <>
       <Box
@@ -71,8 +78,12 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
         // justifyContent={"space-between"}
         height={"100%"}
       >
-        {deposit.asset && <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text> }
-      
+        {deposit.asset && <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text>}
+
+        <Text> Total to be claim: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
+        <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text>
+
+        <Text>To claim: remain_token_to_be_claimed{Number(total_token_to_be_claimed?.toString())}</Text>
 
         {/* {deposit?.id && (
           <Box>
@@ -94,7 +105,7 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
         </Box>
         <DepositInteractions deposit={deposit} id={id}></DepositInteractions>
 
-   
+
       </Box>
     </>
   );

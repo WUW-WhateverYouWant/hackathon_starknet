@@ -5,6 +5,7 @@ import {
   cairo,
   shortString,
   stark,
+  uint256,
   validateAndParseAddress,
 } from "starknet";
 import { feltToAddress, feltToString } from "../../../utils/starknet";
@@ -73,9 +74,34 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
           maxW={"fit-content"}
           minW={{ base: "100px", md: "150px" }}
           onChange={(e) => {
-            // let str = String(Number(e?.target?.value) * 10 ** 18);
-            let str = String(Number(e?.target?.value));
-            setAmountToBuy(cairo.uint256(parseInt(str)));
+            let str = String(Number(e?.target?.value) * 10 ** 18);
+
+
+            let total_amount: Uint256 = cairo.uint256(str);
+            // let total_amount_nb=str;
+            let total_amount_nb = Number(e.target.value);
+            if (Number.isInteger(total_amount_nb)) {
+              total_amount = cairo.uint256(BigInt(str));
+            } else if (!Number.isInteger(total_amount_nb)) {
+              // total_amount=total_amount_nb
+              total_amount = uint256.bnToUint256(BigInt(str));
+            }
+
+
+            // // let str = String(Number(e?.target?.value));
+            // let total_amount:Uint256=cairo.uint256(0);
+            // let total_amount_nb=str;
+            // if (Number.isInteger(total_amount_nb)) {
+            //   total_amount = cairo.uint256(total_amount_nb);
+            // } else if (!Number.isInteger(total_amount_nb)) {
+            //   // total_amount=total_amount_nb
+            //   total_amount = uint256.bnToUint256(BigInt(total_amount_nb));
+            // }
+
+            // // setAmountToBuy(cairo.uint256(str));
+            // setAmountToBuy(total_amount);
+
+            // setAmountToBuy(cairo.uint256(BigInt(str)));
             // setAmountToBuy(Number(e.target.value));
           }}
           placeholder="Amount to buy"

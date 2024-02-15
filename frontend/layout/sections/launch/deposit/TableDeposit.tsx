@@ -30,11 +30,11 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
             <Tr>
               <Th>Token address</Th>
               <Th>To claim</Th>
+              <Th>Quote address</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
-              <Th>Quote address</Th>
               <Th>Amount deposit</Th>
-              <Th>Withdraw</Th>
+              <Th>Datas</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -43,6 +43,8 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
                 const asset = deposit?.asset && feltToAddress(BigInt(deposit?.asset));
                 const quote_address = deposit?.quote_token_address ? feltToAddress(BigInt(deposit?.quote_token_address)) : "0x";
                 let total_amount = deposit?.deposited;
+                let remain_token_to_be_claimed = deposit?.remain_token_to_be_claimed;
+                let total_token_to_be_claimed = deposit?.total_token_to_be_claimed;
                 let total_withdraw = deposit?.withdrawn;
                 console.log("deposit", deposit);
                 return (
@@ -65,11 +67,19 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
                       </Td>
                     </Box>
                     <Td>{quote_address}</Td>
-                    <Td>{Number(total_amount?.toString()) / 10 ** 18}</Td>
+
+                    <Td>
+
+                      <Text> Total to be claim: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
+                      <Text>Deposited {Number(total_amount.toString()) / 10 **18}</Text>
+
+                      <Text>To claim: {Number(total_token_to_be_claimed?.toString()) }</Text>
+                    </Td>
+
                     <Td>{deposit.is_canceled && <Text >Cancel: <MdCancel></MdCancel>
                     </Text>}
+
                     </Td>
-                    <Td>{Number(total_withdraw?.toString()) / 10 ** 18}</Td>
                   </Tr>
                 );
               })}

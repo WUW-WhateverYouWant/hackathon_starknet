@@ -24,6 +24,7 @@ import {
   stark,
 } from "starknet";
 import { UseAccountResult } from "@starknet-react/core";
+import { feltToAddress } from "../../utils/starknet";
 
 
 export async function create_launch(
@@ -77,8 +78,12 @@ export async function create_launch(
     if (is_oracle) {
 
       let asset_paid = await launchpadContract.get_address_token_to_pay_launch();
+      asset_paid= feltToAddress(BigInt(asset_paid))
+      console.log("asset_paid",asset_paid)
       const erc20PaidContract = new Contract(ERC20WUW.abi, asset_paid, provider);
       let amount_paid_fees = await launchpadContract.get_amount_token_to_pay_launch();
+      console.log("amount_paid_fees",amount_paid_fees)
+
       let success = await account.execute([
         {
           contractAddress: erc20PaidContract.address,
