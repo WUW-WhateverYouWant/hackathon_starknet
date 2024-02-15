@@ -73,7 +73,13 @@ export const LaunchViewContainer = () => {
 
       const deposits = await get_deposit_by_users(account?.address);
 
-      setDepositsUser(deposits)
+      let depositsByUser = deposits.filter((depo) => {
+        if(depo.asset && depo.launch_id && depo.deposited> 0 ) {
+          return depo;
+        }
+      })
+
+      setDepositsUser(depositsByUser)
     };
 
     if (
@@ -263,6 +269,10 @@ const DepositLaunchComponent = ({
         >
           {deposits?.length > 0 &&
             deposits.map((deposit, i) => {
+
+              if(!deposit?.asset && Number(deposit?.deposited) > 0 ) {
+                return;
+              }
               return (
                 <DepositCard
                   deposit={deposit}

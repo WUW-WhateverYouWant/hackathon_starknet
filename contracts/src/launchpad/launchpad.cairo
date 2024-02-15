@@ -412,7 +412,7 @@ mod Launchpad {
         fn set_token_selector(ref self:ContractState, address:ContractAddress, selector:felt252) {
             self.accesscontrol.assert_only_role(ADMIN_ROLE);
             self.tokens_selectors.write(address, selector);
-            self.market_felt_by_asset.write(address, selector;)
+            self.market_felt_by_asset.write(address, selector);
         }
 
 
@@ -689,7 +689,7 @@ mod Launchpad {
             if amount_deposit_by_user.deposited> 0 {
 
                 let refund= amount_deposit_by_user.deposited;
-                let remain_token_to_be_claimed= amount_deposit_by_user.remain_token_to_be_claimed
+                let remain_token_to_be_claimed= amount_deposit_by_user.remain_token_to_be_claimed;
 
                 amount_deposit_by_user.deposited=0;
                 amount_deposit_by_user.refunded=refund;
@@ -761,7 +761,8 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
                         amount_to_receive=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         let amount_to_claim:u256 = token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
-                        assert!(amount_to_receive <= launch.remain_balance, "no token to sell");
+                        // assert!(amount_to_receive <= launch.remain_balance, "no token to sell");
+                        assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
                       
                         amount_deposit.total_token_to_be_claimed =amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed =amount_to_claim;
@@ -797,7 +798,8 @@ mod Launchpad {
                     // add oracle or simple data to receive depends on amount 
                     if !launch.is_base_asset_oracle {
 
-                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+                        // assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+                        assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
 
                         let deposited_amount:DepositByUser= DepositByUser {
                             asset:launch.asset,

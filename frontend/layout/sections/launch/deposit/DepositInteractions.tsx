@@ -102,7 +102,8 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
                 deposit?.launch_id ?? id,
                 // cairo.uint256(BigInt(amountToBuy.toString())),
                 amountToBuy,
-                feltToAddress(BigInt(deposit?.asset))
+                feltToAddress(BigInt(deposit?.quote_token_address))
+
               )
             }
           >

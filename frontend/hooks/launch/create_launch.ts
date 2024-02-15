@@ -72,10 +72,11 @@ export async function create_launch(
 
     console.log("Execute multicall")
 
-    const is_oracle = await launchpadContract.get_is_dollar_paid_launch();
-    console.log("is_oracle", is_oracle)
-
-    if (is_oracle) {
+    // const is_oracle = await launchpadContract.get_is_dollar_paid_launch();
+    // console.log("is_oracle", is_oracle)
+    const is_paid_dollar = await launchpadContract.get_is_dollar_paid_launch();
+    console.log("is_paid_dollar", is_paid_dollar)
+    if (is_paid_dollar) {
 
       let asset_paid = await launchpadContract.get_address_token_to_pay_launch();
       asset_paid= feltToAddress(BigInt(asset_paid))

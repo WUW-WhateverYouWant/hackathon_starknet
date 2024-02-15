@@ -39,6 +39,7 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
+  const [amount, setAmount] = useState<number|undefined>(0)
   const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
     cairo.uint256(0)
     // 0
@@ -74,18 +75,24 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
           maxW={"fit-content"}
           minW={{ base: "100px", md: "150px" }}
           onChange={(e) => {
+            let str_pow = String(Number(e?.target?.value) * 10 ** 18);
+            // let str = String(Number(e?.target?.value));
             let str = String(Number(e?.target?.value) * 10 ** 18);
 
 
-            let total_amount: Uint256 = cairo.uint256(str);
+            let total_amount: Uint256 = amountToBuy;
             // let total_amount_nb=str;
             let total_amount_nb = Number(e.target.value);
             if (Number.isInteger(total_amount_nb)) {
-              total_amount = cairo.uint256(BigInt(str));
+              // total_amount = cairo.uint256(BigInt(str));
+              total_amount = cairo.uint256(parseInt(str));
+
             } else if (!Number.isInteger(total_amount_nb)) {
               // total_amount=total_amount_nb
-              total_amount = uint256.bnToUint256(BigInt(str));
+              total_amount = uint256.bnToUint256(parseInt(str));
             }
+            setAmountToBuy(total_amount)
+            setAmount(total_amount_nb)
 
 
             // // let str = String(Number(e?.target?.value));
@@ -123,14 +130,38 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
             width={"100%"}
             my={{ base: "0.25em" }}
 
-            onClick={() =>
+            onClick={() => {
+
+              let decimals = 18;
+
+              // try {
+              //   decimals == (await erc20Contract.decimals());
+              // } catch (e) {
+              // } finally {
+              // }
+              const total_amount_nb = amount * 10 ** Number(decimals);
+              // const total_amount_nb = amount;
+
+              let total_amount;
+
+              if (Number.isInteger(total_amount_nb)) {
+                total_amount = cairo.uint256(total_amount_nb);
+              } else if (!Number.isInteger(total_amount_nb)) {
+                // total_amount=total_amount_nb
+                total_amount = uint256.bnToUint256(parseInt(total_amount_nb.toString()));
+              }
+
               buy_token(
                 account,
                 launch?.launch_id ?? id,
                 // cairo.uint256(BigInt(amountToBuy.toString())),
-                amountToBuy,
+                total_amount,
+                // amountToBuy,
                 feltToAddress(BigInt(launch?.quote_token_address ?? launch?.base_asset_token_address))
               )
+            }
+
+
             }
           >
             Buy token

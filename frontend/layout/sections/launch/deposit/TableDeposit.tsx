@@ -40,6 +40,10 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
           <Tbody>
             {deposits?.length > 0 &&
               deposits.map((deposit, i) => {
+
+                if(!deposit?.asset && Number(deposit?.deposited) > 0 ) {
+                  return;
+                }
                 const asset = deposit?.asset && feltToAddress(BigInt(deposit?.asset));
                 const quote_address = deposit?.quote_token_address ? feltToAddress(BigInt(deposit?.quote_token_address)) : "0x";
                 let total_amount = deposit?.deposited;
@@ -54,8 +58,11 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
                     alignItems={"end"}
                   >
                     <Td>
-                      {asset?.slice(0, 10)} ...
-                      {asset?.slice(asset?.length - 10, asset?.length)}{" "}
+                      {asset.length > 0 && <Text>
+                        {asset.length > 0 && asset?.slice(0, 10)} ...
+                        {asset?.slice(asset?.length - 10, asset?.length)}{" "}
+                      </Text>}
+
                     </Td>
                     <Box
                       gap={{ base: "1em" }}
@@ -71,9 +78,9 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
                     <Td>
 
                       <Text> Total to be claim: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
-                      <Text>Deposited {Number(total_amount.toString()) / 10 **18}</Text>
+                      <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text>
 
-                      <Text>To claim: {Number(total_token_to_be_claimed?.toString()) }</Text>
+                      <Text>To claim: {Number(total_token_to_be_claimed?.toString())}</Text>
                     </Td>
 
                     <Td>{deposit.is_canceled && <Text >Cancel: <MdCancel></MdCancel>
