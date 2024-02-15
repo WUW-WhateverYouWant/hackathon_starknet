@@ -2,11 +2,6 @@ import type { NextPage } from "next";
 import {
   Box,
   Image,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
   Text,
   useColorModeValue,
   useDisclosure,
@@ -19,7 +14,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { LaunchCardView, LaunchInterface } from "../../../types";
 import { get_launch_by_id } from "../../../hooks/launch/get_launch_by_id";
-import { LaunchCard } from "../../../layout/sections/launch/LaunchCard";
 import { LaunchPageView } from "../../../layout/sections/launch/LaunchPageView";
 
 const LaunchPage: NextPage = ({}) => {
@@ -122,13 +116,6 @@ const LaunchPage: NextPage = ({}) => {
                 id={Number(id)}
               ></LaunchPageView>
             )}
-
-            {/* {launchData && (
-              <LaunchCard
-                launch={launchData}
-                viewType={LaunchCardView.RECIPIENT_VIEW}
-              ></LaunchCard>
-            )} */}
           </Box>
         </Box>
       </Box>

@@ -1,7 +1,6 @@
 import type { GetServerSideProps, NextPage, NextPageContext } from "next";
 import {
   Box,
-  Text,
   Tabs,
   TabPanels,
   TabList,

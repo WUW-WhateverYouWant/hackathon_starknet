@@ -109,11 +109,14 @@ export interface LaunchInterface {
 /** Contract interface */
 export interface DepositByUser {
   launch_id?: number;
+  asset:string;
   owner: string;
-  base_asset_token_address: string;
+  quote_token_address: string;
   deposited: number;
   redeemable: string;
-  withdraw_amount: boolean;
+  withdrawn:Uint256;
+  withdraw_amount: Uint256;
+  refunded: Uint256;
   is_canceled: boolean;
   was_canceled: boolean;
   remain_token_to_be_claimed: Uint256;

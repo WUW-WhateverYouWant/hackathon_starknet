@@ -31,15 +31,15 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
           <Thead>
             <Tr>
               <Th>Token address</Th>
-
-              <Th>Owner</Th>
               <Th>Actions</Th>
-
+              <Th>Quote address</Th>
               <Th>Amount deposit</Th>
+
               <Th>Date</Th>
               <Th>Status</Th>
               <Th>Withdraw</Th>
-              <Th>Quote address</Th>
+              <Th>Owner</Th>
+
             </Tr>
           </Thead>
           <Tbody>
@@ -58,7 +58,10 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
 
                 return (
                   <Tr key={i}
-                    height={{ base: "100%" }}
+                    // height={{ base: "100%" }}
+                    justifyContent={"end"}
+                    alignContent={"end"}
+                    alignItems={"end"}
 
                   >
                     <Td>
@@ -74,19 +77,19 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                         <LaunchInteractions launch={l}></LaunchInteractions>
                       </Td>
                     </Box>
-                    <Td>
-                      {sender?.slice(0, 10)} ...
-                      {sender?.slice(sender?.length - 10, sender?.length)}{" "}
-                    </Td>
+                    <Td>{quote_address}</Td>
                     <Td>{Number(total_amount?.toString()) / 10 ** 18}</Td>
+
                     <Td
-                      display={"flex"}
+                      // minW={{ base: "175px" }}
+                      display={"grid"}
+                      gap={{ base: "0.5em" }}
                     >
                       <Text>
-                        Date: {formatDateTime(startDate)}
+                        Start: {formatDateTime(startDate)}
                       </Text>
                       <Text>
-                        End  Date: {formatDateTime(endDate)}
+                        End: {formatDateTime(endDate)}
                       </Text>
                     </Td>
                     <Td>{l.is_canceled && <Text >Cancel: <MdCancel></MdCancel>
@@ -102,7 +105,11 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                         </Text>}
                     </Td>
                     <Td>{Number(total_withdraw?.toString()) / 10 ** 18}</Td>
-                    <Td>{quote_address}</Td>
+
+                    <Td>
+                      {sender?.slice(0, 10)} ...
+                      {sender?.slice(sender?.length - 10, sender?.length)}{" "}
+                    </Td>
                   </Tr>
                 );
                 // }

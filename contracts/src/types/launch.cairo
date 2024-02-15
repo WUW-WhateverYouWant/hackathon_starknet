@@ -58,6 +58,7 @@ struct AmountLaunch {
 #[derive( Drop, Copy, starknet::Store, Serde )]
 struct DepositByUser {
     launch_id:u64,
+    asset:ContractAddress,
     owner: ContractAddress,
     quote_token_address:ContractAddress,
     total_amount: u256,

@@ -25,6 +25,8 @@ import { TableLaunchpad } from "./TableLaunch";
 import { get_launchs_by_owner } from "../../../hooks/launch/get_launchs_by_owner";
 import { get_all_launchs } from "../../../hooks/launch/get_all_launchs";
 import { get_deposit_by_users } from "../../../hooks/launch/get_deposit_by_users";
+import { DepositCard } from "./deposit/DepositCard";
+import { TableDeposit } from "./deposit/TableDeposit";
 
 enum EnumStreamSelector {
   SENDER = "SENDER",
@@ -40,7 +42,7 @@ export const LaunchViewContainer = () => {
   const account = useAccount().account;
   const [launchs, setLaunchs] = useState<LaunchInterface[]>([]);
   const [isLoadOneTime, setIsLoadOneTime] = useState<boolean>(false);
-  const [depositsByUser, setDepositsUser] = useState<DepositByUser[]>([]);
+  const [deposits, setDepositsUser] = useState<DepositByUser[]>([]);
 
   const [launchsCreated, setLaunchCreated] = useState<LaunchInterface[]>([]);
   const [selectView, setSelectView] = useState<EnumStreamSelector>(
@@ -54,12 +56,12 @@ export const LaunchViewContainer = () => {
 
 
       const launchs = await get_all_launchs();
-      console.log("all_launchs",launchs)
+      console.log("all_launchs", launchs)
       setLaunchs(launchs)
     };
 
     const getLaunchsByOwner = async () => {
-  
+
 
       const launchsByOwner = await get_launchs_by_owner(account?.address);
 
@@ -74,14 +76,14 @@ export const LaunchViewContainer = () => {
       setDepositsUser(deposits)
     };
 
-    if(
+    if (
       true
       // launchs && 
       // launchs?.length == 0 
       // && !isLoadOneTime
       // && 
       // account?.address
-      )  {
+    ) {
       getAllLaunchs();
 
     }
@@ -92,7 +94,7 @@ export const LaunchViewContainer = () => {
       getLaunchsByOwner();
       getDepositByOwner();
     }
-   
+
   }, [account?.address, account, isLoadOneTime]);
 
   return (
@@ -133,6 +135,12 @@ export const LaunchViewContainer = () => {
           >
             Launch created
           </Tab>
+          <Tab
+            onClick={() => setSelectView(EnumStreamSelector.SENDER)}
+            _selected={{ color: "brand.primary" }}
+          >
+            Deposit
+          </Tab>
         </TabList>
 
         <TabPanels>
@@ -153,14 +161,14 @@ export const LaunchViewContainer = () => {
               viewType={viewType}
             ></RecipientLaunchComponent>
           </TabPanel>
-          {/* <TabPanel>
-            <SenderLaunchComponent
-              launchSend={streamsSend}
-              setStreamsSend={setStreamsSend}
+          <TabPanel>
+            <DepositLaunchComponent
+              deposits={deposits}
+              setDeposits={setDepositsUser}
               setViewType={setViewType}
               viewType={viewType}
             />
-          </TabPanel> */}
+          </TabPanel>
         </TabPanels>
       </Tabs>
     </>
@@ -218,6 +226,59 @@ const RecipientLaunchComponent = ({
           launchs={launchsReceivedProps}
           viewType={LaunchCardView.RECIPIENT_VIEW}
         ></TableLaunchpad>
+      )}
+    </Box>
+  );
+};
+
+interface IDepositLaunchComponent {
+  deposits: DepositByUser[];
+  setDeposits: (deposits: DepositByUser[]) => void;
+  viewType?: ViewType;
+  setViewType: (viewType: ViewType) => void;
+}
+
+const DepositLaunchComponent = ({
+  deposits,
+  setDeposits,
+  viewType,
+  setViewType,
+}: IDepositLaunchComponent) => {
+  const account = useAccount();
+  return (
+    <Box>
+      <Text>Check the launch you can receive here.</Text>
+      <Text>Total: {deposits?.length}</Text>
+      {viewType == ViewType.CARDS && (
+        <Box
+          // display={"grid"}
+          // gap={{ base: "0.5em" }}
+
+          display={"grid"}
+          gridTemplateColumns={{
+            base: "repeat(1,1fr)",
+            md: "repeat(2,1fr)",
+          }}
+          gap={{ base: "0.5em" }}
+        >
+          {deposits?.length > 0 &&
+            deposits.map((deposit, i) => {
+              return (
+                <DepositCard
+                  deposit={deposit}
+                  key={i}
+                  viewType={LaunchCardView.RECIPIENT_VIEW}
+                />
+              );
+            })}
+        </Box>
+      )}
+
+      {viewType == ViewType.TABS && (
+        <TableDeposit
+          deposits={deposits}
+          viewType={LaunchCardView.RECIPIENT_VIEW}
+        ></TableDeposit>
       )}
     </Box>
   );

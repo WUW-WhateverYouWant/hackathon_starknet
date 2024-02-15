@@ -21,6 +21,7 @@ import { buy_token } from "../../../hooks/launch/buy_token";
 import { cancel_launch } from "../../../hooks/launch/cancel_launch";
 import { withdraw_token } from "../../../hooks/launch/withdraw_token";
 import { LaunchComponent } from "./LaunchComponent";
+import { LaunchInteractions } from "./LaunchInteractions";
 
 interface ILaunchPageView {
   launch?: LaunchInterface;
@@ -53,23 +54,6 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
   }, [address]);
 
   const owner = feltToAddress(BigInt(launch?.owner?.toString()));
-  function timeAgo(date: Date): string {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds} seconds ago`;
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    } else {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days > 1 ? "s" : ""} ago`;
-    }
-  }
   let total_amount = launch?.amounts?.deposited;
   return (
     <>
@@ -84,145 +68,8 @@ export const LaunchPageView = ({ launch, viewType, id }: ILaunchPageView) => {
         // justifyContent={"space-between"}
         height={"100%"}
       >
-        {/* <Text>Start Date: {startDate?.toString()}</Text> */}
         <LaunchComponent launch={launch} id={id}></LaunchComponent>
-        <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
-
-        <Box
-          display={{ md: "flex" }}
-        >
-          <Box>
-            <Text>Start Date: {formatDateTime(startDate)}</Text>
-            <Text>End Date: {timeAgo(endDate)}</Text>
-            <Text>End Date: {formatDateTime(endDate)}</Text>
-          </Box>
-
-          <Box>
-            {launch?.is_canceled && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Cancel <BiCheck color="red"></BiCheck>
-              </Box>
-            )}
-
-            {launch?.is_depleted && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Depleted <BiCheckShield></BiCheckShield>
-              </Box>
-            )}
-
-            {launch?.amounts?.withdrawn && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Withdraw <BiCheck></BiCheck>
-                <Box>{launch?.amounts?.withdrawn.toString()}</Box>
-              </Box>
-            )}
-          </Box>
-        </Box>
-
-        {/* {launch?.id && (
-          <Box>
-            launch id:{" "}
-            {shortString.decodeShortString(launch?.launch_id.toString())}
-          </Box>
-        )} */}
-
-        <Box>
-          <ExternalStylizedButtonLink
-            // pb={{ base: "0.5em" }}
-            textOverflow={"no"}
-            maxW={{ md: "170px" }}
-            href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${owner}`}
-          >
-            {/* <Text>{senderAddress}</Text> */}
-            <Text>Owner explorer</Text>
-          </ExternalStylizedButtonLink>
-        </Box>
-
-        <Box>
-          <Text>Amount: {Number(total_amount) / 10 ** 18}</Text>
-
-          <Box display={{ base: "flex" }} gap={{ base: "0.5em" }}>
-            {launch?.amounts?.refunded && (
-              <Text>
-                Refunded {Number(launch.amounts?.refunded) / 10 ** 18}
-              </Text>
-            )}
-            {launch?.amounts?.withdrawn && (
-              <Text>
-                Withdraw {Number(launch.amounts?.withdrawn) / 10 ** 18}
-              </Text>
-            )}
-          </Box>
-        </Box>
-
-        <Box
-          gap="1em"
-          justifyContent={"start"}
-          // justifyContent={"space-around"}
-          justifyItems={"left"}
-          justifySelf={"self-start"}
-          display={{ md: "grid" }}
-        >
-          {amountToBuy && Number(amountToBuy) > 0 && (
-            <Text>Amount to buy: {Number(amountToBuy)}</Text>
-          )}
-          <Input
-            py={{ base: "0.5em" }}
-            type="number"
-            my={{ base: "0.25em", md: "0.5em" }}
-            maxW={"fit-content"}
-            onChange={(e) => {
-              let str = String(Number(e?.target?.value) * 10 ** 18);
-              setAmountToBuy(cairo.uint256(parseInt(str)));
-              // setAmountToBuy(Number(e.target.value));
-            }}
-            placeholder="Amount to buy"
-          ></Input>
-
-          <Button
-            onClick={() =>
-              buy_token(
-                account,
-                launch?.launch_id ?? id,
-                // cairo.uint256(BigInt(amountToBuy.toString())),
-                amountToBuy,
-                feltToAddress(BigInt(launch?.asset))
-              )
-            }
-          >
-            Buy token
-          </Button>
-        </Box>
-        <Box
-          textAlign={"left"}
-          justifyContent={"start"}
-          px={{ base: "0.25em" }}
-          py={{ base: "0.25em" }}
-        >
-          <Box display={"grid"} justifyContent={"start"}>
-            {owner == address && (
-              <Box>
-                <Button
-                  onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
-
-            {owner != address && withdrawTo && !launch.is_canceled && (
-              <Box>
-                <Button
-                  onClick={() =>
-                    withdraw_token(account, launch?.launch_id ?? id)
-                  }
-                >
-                  Withdraw max
-                </Button>
-              </Box>
-            )}
-          </Box>
-        </Box>
+        <LaunchInteractions launch={launch} id={id}></LaunchInteractions>
       </Box>
     </>
   );

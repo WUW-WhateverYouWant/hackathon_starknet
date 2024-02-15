@@ -93,7 +93,8 @@ mod Launchpad {
         SetIsPaidDollarLaunch,
         SetAddressTokenToPayLaunch,
         SetJediwapNFTRouterV2,
-        AddLiquidity
+        AddLiquidity,
+        LiquidityCreated
     };
     use wuw_contracts::types::jediswap:: {
       MintParams
@@ -185,7 +186,8 @@ mod Launchpad {
         SetJediwapNFTRouterV2:SetJediwapNFTRouterV2,
         SetIsPaidDollarLaunch:SetIsPaidDollarLaunch,
         SetAddressTokenToPayLaunch:SetAddressTokenToPayLaunch,
-        AddLiquidity:AddLiquidity
+        AddLiquidity:AddLiquidity,
+        LiquidityCreated:LiquidityCreated
      
     }
 
@@ -321,9 +323,10 @@ mod Launchpad {
                 self.emit( LiquidityCreated {
                     id:launch.launch_id,
                     pool:pool,
-                    quote_token_address,
+                    quote_token_address:launch.quote_token_address,
                     token_id:token_id,
-                    owner:launch.owner
+                    owner:launch.owner,
+                    asset:launch.asset,
                 });
                 
             } else {
@@ -775,6 +778,7 @@ mod Launchpad {
                         // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount:DepositByUser= DepositByUser {
+                            asset:launch.asset,
                             quote_token_address:launch.quote_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,
@@ -806,6 +810,7 @@ mod Launchpad {
                         // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
+                            asset:launch.asset,
                             quote_token_address:launch.quote_token_address,
                             total_amount:token_amount_base,
                             launch_id:launch_id,

@@ -1,39 +1,25 @@
-import { Box, Card, Text, Button, CardFooter, Input } from "@chakra-ui/react";
-import { LaunchInterface, LaunchCardView } from "../../../types";
+import { Box, Text, Button, CardFooter, Input } from "@chakra-ui/react";
+import { LaunchCardView, DepositByUser } from "../../../../types";
 import {
   Uint256,
   cairo,
-  shortString,
-  stark,
-  validateAndParseAddress,
 } from "starknet";
-import { feltToAddress, feltToString } from "../../../utils/starknet";
+import { feltToAddress, feltToString } from "../../../../utils/starknet";
 import { useAccount } from "@starknet-react/core";
 import { useEffect, useState } from "react";
-import { formatDateTime, formatRelativeTime } from "../../../utils/format";
-import { BiCheck, BiCheckShield } from "react-icons/bi";
-import {
-  ExternalStylizedButtonLink,
-  ExternalTransparentButtonLink,
-} from "../../../components/button/NavItem";
-import { CONFIG_WEBSITE } from "../../../constants";
-import { buy_token } from "../../../hooks/launch/buy_token";
-import { cancel_launch } from "../../../hooks/launch/cancel_launch";
-import { withdraw_token } from "../../../hooks/launch/withdraw_token";
+
+import { buy_token } from "../../../../hooks/launch/buy_token";
+import { cancel_launch } from "../../../../hooks/launch/cancel_launch";
+import { withdraw_token } from "../../../../hooks/launch/withdraw_token";
 
 interface ILaunchPageView {
-  launch?: LaunchInterface;
+  deposit?: DepositByUser;
   viewType?: LaunchCardView;
   id?: number;
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) => {
-  const startDateBn = Number(launch.start_date.toString());
-  const startDate = new Date(startDateBn);
-
-  const endDateBn = Number(launch.end_date.toString());
-  const endDate = new Date(endDateBn);
+export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) => {
   const account = useAccount().account;
   const address = account?.address;
 
@@ -51,7 +37,7 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
     updateWithdrawTo();
   }, [address]);
 
-  const owner = feltToAddress(BigInt(launch?.owner?.toString()));
+  const owner = feltToAddress(BigInt(deposit?.owner?.toString()));
   return (
     <>
       <Box
@@ -95,10 +81,10 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
             onClick={() =>
               buy_token(
                 account,
-                launch?.launch_id ?? id,
+                deposit?.launch_id ?? id,
                 // cairo.uint256(BigInt(amountToBuy.toString())),
                 amountToBuy,
-                feltToAddress(BigInt(launch?.asset))
+                feltToAddress(BigInt(deposit?.asset))
               )
             }
           >
@@ -109,7 +95,7 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
             width={"100%"}
             // bg="transparent"
             // my={{ base: "0.15em" }}
-            onClick={() => withdraw_token(account, launch?.launch_id ?? id)}
+            onClick={() => withdraw_token(account, deposit?.launch_id ?? id)}
           >Withdraw</Button>
         </Box>
 
@@ -118,7 +104,7 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
 
             <Button
               bg="transparent"
-              onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
+              onClick={() => cancel_launch(account, deposit?.launch_id ?? id)}
             >
               Cancel
             </Button>
