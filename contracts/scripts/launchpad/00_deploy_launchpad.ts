@@ -99,7 +99,7 @@ async function main() {
     },
     { nonce: nonce }
   );
-  console.log("🚀 contract_address =", address);
+  console.log("🚀 Launchpad contract_address =", address);
   await provider.waitForTransaction(th2);
   console.log("✅ Test completed.");
 

@@ -80,6 +80,7 @@ export interface CreateRangeProps {
 export interface LaunchInterface {
   launch_id?: number;
   quote_token_address:string;
+  base_asset_token_address?:string;
   owner: string;
   recipient: string;
   total_amount: number;
@@ -109,16 +110,15 @@ export interface LaunchInterface {
 /** Contract interface */
 export interface DepositByUser {
   launch_id?: number;
-  asset:string;
+  asset?:string;
   owner: string;
-  quote_token_address: string;
-  deposited: number;
+  quote_token_address?: string;
+  deposited?: number;
   redeemable: string;
   withdrawn:Uint256;
   withdraw_amount: Uint256;
   refunded: Uint256;
-  is_canceled: boolean;
-  was_canceled: boolean;
+  is_canceled?: boolean;
   remain_token_to_be_claimed: Uint256;
   total_token_to_be_claimed: Uint256;
 }

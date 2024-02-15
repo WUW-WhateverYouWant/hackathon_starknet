@@ -71,7 +71,7 @@ export async function buy_token(
         contractAddress: erc20Contract.address,
         entrypoint: "approve",
         calldata: CallData.compile({
-          recipient: asset,
+          recipient: launchpadContract?.address,
           // amount: token_amount_base,
           token_amount_base: token_amount_base,
         }),

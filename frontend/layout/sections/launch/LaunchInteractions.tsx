@@ -63,42 +63,47 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
         // justifyContent={"space-between"}
         height={"100%"}
       >
-
+        {amountToBuy && Number(amountToBuy) > 0 && (
+          <Text>Amount to buy: {Number(amountToBuy)}</Text>
+        )}
+        <Input
+          py={{ base: "0.5em" }}
+          type="number"
+          my={{ base: "0.25em", md: "0.5em" }}
+          maxW={"fit-content"}
+          minW={{ base: "100px", md: "150px" }}
+          onChange={(e) => {
+            // let str = String(Number(e?.target?.value) * 10 ** 18);
+            let str = String(Number(e?.target?.value));
+            setAmountToBuy(cairo.uint256(parseInt(str)));
+            // setAmountToBuy(Number(e.target.value));
+          }}
+          placeholder="Amount to buy"
+        ></Input>
         <Box
           gap="1em"
           justifyContent={"start"}
           // justifyContent={"space-around"}
           justifyItems={"left"}
           justifySelf={"self-start"}
-          display={{ md: "grid" }}
+          // display={{ md: "grid" }}
+          display={"flex"}
+          gridTemplateColumns={{ md: "repeat(3,1fr)" }}
         >
-          {amountToBuy && Number(amountToBuy) > 0 && (
-            <Text>Amount to buy: {Number(amountToBuy)}</Text>
-          )}
-          <Input
-            py={{ base: "0.5em" }}
-            type="number"
-            my={{ base: "0.25em", md: "0.5em" }}
-            maxW={"fit-content"}
-            minW={{ base: "100px", md: "150px" }}
-            onChange={(e) => {
-              let str = String(Number(e?.target?.value) * 10 ** 18);
-              setAmountToBuy(cairo.uint256(parseInt(str)));
-              // setAmountToBuy(Number(e.target.value));
-            }}
-            placeholder="Amount to buy"
-          ></Input>
+
 
           <Button
             // bg="transparent"
             width={"100%"}
+            my={{ base: "0.25em" }}
+
             onClick={() =>
               buy_token(
                 account,
                 launch?.launch_id ?? id,
                 // cairo.uint256(BigInt(amountToBuy.toString())),
                 amountToBuy,
-                feltToAddress(BigInt(launch?.asset))
+                feltToAddress(BigInt(launch?.quote_token_address ?? launch?.base_asset_token_address))
               )
             }
           >
@@ -111,20 +116,24 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
             // my={{ base: "0.15em" }}
             onClick={() => withdraw_token(account, launch?.launch_id ?? id)}
           >Withdraw</Button>
+
         </Box>
 
-        <Box display={"grid"} justifyContent={"start"}>
-          {owner == address && (
-
+        {owner == address && (
+          <Box display={"grid"}
+            // justifyContent={"start"}
+            my={{ base: "0.25em" }}
+          >
             <Button
-              bg="transparent"
+              // bg="transparent"
+              width={'100%'}
               onClick={() => cancel_launch(account, launch?.launch_id ?? id)}
             >
               Cancel
             </Button>
+          </Box>
+        )}
 
-          )}
-        </Box>
       </Box>
     </>
   );

@@ -7,6 +7,7 @@ import { useAccount } from "@starknet-react/core";
 import { useEffect, useState } from "react";
 
 import { LaunchComponent } from "../LaunchComponent";
+import { DepositComponent } from "./DepositComponent";
 
 interface IDepositCard {
   deposit?: DepositByUser;
@@ -15,11 +16,6 @@ interface IDepositCard {
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
 export const DepositCard = ({ deposit, viewType, }: IDepositCard) => {
-  const startDateBn = Number(deposit.start_date.toString());
-  const startDate = new Date(startDateBn);
-
-  const endDateBn = Number(deposit.end_date.toString());
-  const endDate = new Date(endDateBn);
   const account = useAccount().account;
   const address = account?.address;
 
@@ -34,24 +30,6 @@ export const DepositCard = ({ deposit, viewType, }: IDepositCard) => {
     updateWithdrawTo();
   }, [address]);
 
-  const owner = feltToAddress(BigInt(deposit?.owner?.toString()));
-  function timeAgo(date: Date): string {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds} seconds ago`;
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    } else {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days > 1 ? "s" : ""} ago`;
-    }
-  }
   return (
     <>
       <Card
@@ -71,7 +49,7 @@ export const DepositCard = ({ deposit, viewType, }: IDepositCard) => {
         border={"1px"}
         height={"100%"}
       >
-        <LaunchComponent deposit={deposit} ></LaunchComponent>
+        <DepositComponent deposit={deposit} ></DepositComponent>
       </Card>
     </>
   );

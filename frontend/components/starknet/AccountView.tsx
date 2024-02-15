@@ -27,7 +27,11 @@ const AccountView = ({
             gap={{ base: "0.5em", md: "1em" }}
           >
             <Text>Address:</Text>
-            <Text width={{ base: "270px", md: "100%" }}>
+            <Text 
+            // width={{ base: "290px", md: "100%" }}
+            wordBreak={"break-word"}
+            >
+              
               {" "}
               {accountStarknet?.account?.address}
             </Text>

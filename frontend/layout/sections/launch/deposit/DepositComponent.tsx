@@ -15,6 +15,7 @@ import {
 } from "../../../../components/button/NavItem";
 import { CONFIG_WEBSITE } from "../../../../constants";
 import { LaunchInteractions } from "../LaunchInteractions";
+import { DepositInteractions } from "./DepositInteractions";
 
 interface IDepositComponentPageView {
   deposit?: DepositByUser;
@@ -23,12 +24,7 @@ interface IDepositComponentPageView {
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const LaunchComponent = ({ deposit, viewType, id }: IDepositComponentPageView) => {
-  const startDateBn = Number(deposit.start_date.toString());
-  const startDate = new Date(startDateBn);
-
-  const endDateBn = Number(deposit.end_date.toString());
-  const endDate = new Date(endDateBn);
+export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPageView) => {
   const account = useAccount().account;
   const address = account?.address;
 
@@ -64,7 +60,6 @@ export const LaunchComponent = ({ deposit, viewType, id }: IDepositComponentPage
       return `${days} day${days > 1 ? "s" : ""} ago`;
     }
   }
-  let total_amount = deposit?.amounts?.deposited;
   return (
     <>
       <Box
@@ -76,37 +71,8 @@ export const LaunchComponent = ({ deposit, viewType, id }: IDepositComponentPage
         // justifyContent={"space-between"}
         height={"100%"}
       >
-        <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text>
-        <Box 
-        display={{ md: "flex" }}
-        >
-          <Box>
-            <Text>Start Date: {formatDateTime(startDate)}</Text>
-            <Text>End Date: {timeAgo(endDate)}</Text>
-            <Text>End Date: {formatDateTime(endDate)}</Text>
-          </Box>
-
-          <Box>
-            {deposit?.is_canceled && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Cancel <BiCheck color="red"></BiCheck>
-              </Box>
-            )}
-
-            {deposit?.is_depleted && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Depleted <BiCheckShield></BiCheckShield>
-              </Box>
-            )}
-
-            {deposit?.amounts?.withdrawn && (
-              <Box display={"flex"} gap="1em" alignItems={"baseline"}>
-                Withdraw <BiCheck></BiCheck>
-                <Box>{deposit?.amounts?.withdrawn.toString()}</Box>
-              </Box>
-            )}
-          </Box>
-        </Box>
+        {deposit.asset && <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text> }
+      
 
         {/* {deposit?.id && (
           <Box>
@@ -126,25 +92,7 @@ export const LaunchComponent = ({ deposit, viewType, id }: IDepositComponentPage
             <Text>Owner explorer</Text>
           </ExternalStylizedButtonLink>
         </Box>
-
-        <Box>
-          <Text>Amount: {Number(total_amount) / 10 ** 18}</Text>
-
-          <Box display={{ base: "flex" }} gap={{ base: "0.5em" }}>
-            {deposit?.amounts?.refunded && (
-              <Text>
-                Refunded {Number(deposit.amounts?.refunded) / 10 ** 18}
-              </Text>
-            )}
-            {deposit?.amounts?.withdrawn && (
-              <Text>
-                Withdraw {Number(deposit.amounts?.withdrawn) / 10 ** 18}
-              </Text>
-            )}
-          </Box>
-        </Box>
-
-        <LaunchInteractions deposit={deposit} id={id}></LaunchInteractions>
+        <DepositInteractions deposit={deposit} id={id}></DepositInteractions>
 
    
       </Box>

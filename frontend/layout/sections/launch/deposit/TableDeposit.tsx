@@ -40,7 +40,7 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
           <Tbody>
             {deposits?.length > 0 &&
               deposits.map((deposit, i) => {
-                const asset = feltToAddress(BigInt(deposit?.asset));
+                const asset = deposit?.asset && feltToAddress(BigInt(deposit?.asset));
                 const quote_address = deposit?.quote_token_address ? feltToAddress(BigInt(deposit?.quote_token_address)) : "0x";
                 let total_amount = deposit?.deposited;
                 let total_withdraw = deposit?.withdrawn;

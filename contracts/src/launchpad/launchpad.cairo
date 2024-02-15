@@ -303,7 +303,8 @@ mod Launchpad {
                 let token_quote = IERC20Dispatcher {contract_address:token_b};
                 token_asset.approve(nft_router_address, launch.total_amount);
                 token_quote.approve(nft_router_address, launch.amounts.deposited);
-
+                // TODO verify Mint params 
+                // Test snforge in Sepolia
                 let mint_params = MintParams {
                     token0:token_a,
                     token1:token_b,
@@ -429,6 +430,9 @@ mod Launchpad {
 
         // CREATOR POOL
         // OWNER OF LAUNCHPAD
+        // TODO WIP
+        // Finish assert for soft_cap & hard_cap 
+        // Check liquidity price, receive is coherent 
         fn create_launch(ref self: ContractState,
             asset:ContractAddress,
             quote_token_address:ContractAddress,
@@ -438,8 +442,9 @@ mod Launchpad {
             end_date:u64,
             soft_cap:u256,
             max_deposit_by_user:u256,
-            // is_liquidity:bool TODO add params 
-            // liquidity_percent:at least 50%
+            // hard_cap:u256 // hard cap
+            // is_liquidity:bool // TODO add params 
+            // liquidity_percent:u8 //at least 50%
 
         ) -> u64 {
 
@@ -452,6 +457,7 @@ mod Launchpad {
             // TODO Different tokens
             assert!(asset != quote_token_address, "same token");
 
+            // TODO Check soft_cap & token liquidity
             let contract_address=get_contract_address();
             let sender=get_caller_address();
 
@@ -506,6 +512,9 @@ mod Launchpad {
             next_id
         }
 
+
+        // TODO 
+    
         fn create_launch_base_oracle(ref self: ContractState,
             asset:ContractAddress,
             quote_token_address:ContractAddress,
@@ -515,8 +524,6 @@ mod Launchpad {
             soft_cap:u256,
             max_deposit_by_user:u256,
             token_per_dollar:u256
-
-
         ) -> u64 {
 
             // Verify base token 
@@ -775,7 +782,6 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
 
                         assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
-                        // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount:DepositByUser= DepositByUser {
                             asset:launch.asset,
@@ -807,7 +813,6 @@ mod Launchpad {
                         let dollar_price_position= price*token_amount_base;
                         amount_to_receive=dollar_price_position*launch.token_per_dollar;
                         assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
-                        // assert!(launch.remain_balance-amount_to_receive>0, "too much buy");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
                             asset:launch.asset,
@@ -830,8 +835,8 @@ mod Launchpad {
                    
             }
 
-            //  TODO
-            // Substract amount remain in sale 
+            //  TODO TODO_URGENT fix
+            // Fix Substract amount remain in sale 
             launch.remain_balance-=amount_to_receive;
             launch.amounts.deposited+=token_amount_base;
             // Send token
@@ -873,7 +878,7 @@ mod Launchpad {
                 // Send amount by claim 
                 let amount_to_send=amount_deposit.remain_token_to_be_claimed;
 
-                IERC20Dispatcher{contract_address:launch.quote_token_address}.transfer(amount_deposit.owner, amount_to_send );
+                IERC20Dispatcher{contract_address:launch.asset}.transfer(amount_deposit.owner, amount_to_send );
                 amount_deposit.remain_token_to_be_claimed=0;
                 self.deposit_user_by_launch.write((sender, launch_id), amount_deposit);
 

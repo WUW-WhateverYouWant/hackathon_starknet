@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { buy_token } from "../../../../hooks/launch/buy_token";
 import { cancel_launch } from "../../../../hooks/launch/cancel_launch";
 import { withdraw_token } from "../../../../hooks/launch/withdraw_token";
+import { refund_deposit_amount } from "../../../../hooks/launch/refund_deposit_amount";
 
 interface ILaunchPageView {
   deposit?: DepositByUser;
@@ -78,6 +79,7 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
           <Button
             // bg="transparent"
             width={"100%"}
+            my={{ base: "0.25em" }}
             onClick={() =>
               buy_token(
                 account,
@@ -97,19 +99,16 @@ export const DepositInteractions = ({ deposit, viewType, id }: ILaunchPageView) 
             // my={{ base: "0.15em" }}
             onClick={() => withdraw_token(account, deposit?.launch_id ?? id)}
           >Withdraw</Button>
+          <Button
+            // bg="transparent"
+            onClick={() => refund_deposit_amount(account, deposit?.launch_id ?? id)}
+          >
+            Refund
+          </Button>
         </Box>
 
         <Box display={"grid"} justifyContent={"start"}>
-          {owner == address && (
-
-            <Button
-              bg="transparent"
-              onClick={() => cancel_launch(account, deposit?.launch_id ?? id)}
-            >
-              Cancel
-            </Button>
-
-          )}
+      
         </Box>
       </Box>
     </>
