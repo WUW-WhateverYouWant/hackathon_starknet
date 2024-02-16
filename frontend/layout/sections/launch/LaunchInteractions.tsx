@@ -142,6 +142,8 @@ export const LaunchInteractions = ({ launch, viewType, id }: ILaunchPageView) =>
               const total_amount_nb = amount * 10 ** Number(decimals);
               // const total_amount_nb = amount;
 
+              // const total_amount_nb = amount;
+
               let total_amount;
 
               if (Number.isInteger(total_amount_nb)) {

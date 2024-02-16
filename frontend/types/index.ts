@@ -36,6 +36,7 @@ export interface CreateLaunch extends LaunchDurationProps {
   // total_amount: Uint256,
   asset: string;
 
+  quote_token_address?: string,
   base_asset_token_address: string,
   token_received_per_one_base: Uint256,
   cancelable: boolean,
@@ -43,6 +44,8 @@ export interface CreateLaunch extends LaunchDurationProps {
   start_date: number,
   end_date: number,
   soft_cap: Uint256,
+  hard_cap: Uint256,
+  min_deposit_by_user:Uint256,
   max_deposit_by_user:Uint256
 
   // range: Range;
@@ -79,7 +82,7 @@ export interface CreateRangeProps {
 /** Contract interface */
 export interface LaunchInterface {
   launch_id?: number;
-  quote_token_address:string;
+  quote_token_address?:string;
   base_asset_token_address?:string;
   owner: string;
   recipient: string;
@@ -94,10 +97,14 @@ export interface LaunchInterface {
   start_date?: number;
   end_date?: number;
   soft_cap?:number;
+  hard_cap?:Uint256,
+
   token_per_dollar?:number;
   token_received_per_one_base?:number;
   remain_balance?:number;
   max_deposit_by_user?:number;
+  min_deposit_by_user?:number,
+
   // start_time?: number;
   // end_time?: number;
   range: Range;

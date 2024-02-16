@@ -78,12 +78,32 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
         // justifyContent={"space-between"}
         height={"100%"}
       >
+
+
         {deposit.asset && <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text>}
 
-        <Text> Total to be claim: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
-        <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text>
+        {deposit?.asset &&
+          <ExternalStylizedButtonLink
+            // pb={{ base: "0.5em" }}
+            textOverflow={"no"}
+            maxW={{ md: "170px" }}
+            href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${deposit?.asset}`}
+          >
+            {/* <Text>{senderAddress}</Text> */}
+            <Text> Asset</Text>
+          </ExternalStylizedButtonLink>
+        }
+        <Box 
+        // display={"flex"}
+        >
 
-        <Text>To claim: remain_token_to_be_claimed{Number(total_token_to_be_claimed?.toString())}</Text>
+          <Text>Deposited {Number(total_amount.toString()) / 10 **18}</Text>
+
+          <Text>To claim: {Number(total_token_to_be_claimed?.toString()) / 10 ** 18}</Text>
+          <Text> Withdraw {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
+        </Box>
+        {/* <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text> */}
+
 
         {/* {deposit?.id && (
           <Box>

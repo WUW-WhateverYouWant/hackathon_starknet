@@ -21,7 +21,8 @@ struct Launch {
     is_canceled:bool,
     is_refundable:bool,
     soft_cap:u256,
-    // hard_cap:u256,
+    hard_cap:u256,
+    min_deposit_by_user:u256,
     max_deposit_by_user:u256,
     is_base_asset_oracle:bool,
 

@@ -37,6 +37,11 @@ enum ViewType {
   TABS = "TABS",
   CARDS = "CARDS",
 }
+
+export interface IFilterLaunch {
+  is_canceled_view: boolean;
+  is_no_remain_view: boolean;
+}
 /** @TODO getters Cairo contracts, Indexer */
 export const LaunchViewContainer = () => {
   const account = useAccount().account;
@@ -49,15 +54,28 @@ export const LaunchViewContainer = () => {
     EnumStreamSelector.SENDER
   );
   const [viewType, setViewType] = useState<ViewType>(ViewType.TABS);
+
+  const [filterLaunch, setFilterLaunch] = useState<IFilterLaunch>({
+    is_canceled_view: true,
+    is_no_remain_view: false
+  })
   // console.log("launchs state Send", launchs);
 
   useEffect(() => {
     const getAllLaunchs = async () => {
 
-
       const launchs = await get_all_launchs();
       console.log("all_launchs", launchs)
-      setLaunchs(launchs)
+      let launchsFilter = launchs?.filter((launch) => {
+        if ( filterLaunch.is_canceled_view == true && launch.is_canceled) {
+          return;
+        }
+        return launch;
+      })
+      console.log("filter launchs", filterLaunch)
+      console.log("launchs Filter", launchsFilter)
+
+      setLaunchs(launchsFilter)
     };
 
     const getLaunchsByOwner = async () => {
@@ -74,25 +92,15 @@ export const LaunchViewContainer = () => {
       const deposits = await get_deposit_by_users(account?.address);
 
       let depositsByUser = deposits.filter((depo) => {
-        if(depo.asset && depo.launch_id && depo.deposited> 0 ) {
+        if (depo.asset && depo.launch_id && depo.deposited > 0) {
           return depo;
         }
       })
 
       setDepositsUser(depositsByUser)
     };
+    getAllLaunchs();
 
-    if (
-      true
-      // launchs && 
-      // launchs?.length == 0 
-      // && !isLoadOneTime
-      // && 
-      // account?.address
-    ) {
-      getAllLaunchs();
-
-    }
     if (
       account?.address
       // &&  selectView == EnumStreamSelector.SENDER
@@ -101,7 +109,7 @@ export const LaunchViewContainer = () => {
       getDepositByOwner();
     }
 
-  }, [account?.address, account, isLoadOneTime]);
+  }, [account?.address, account, isLoadOneTime, filterLaunch]);
 
   return (
     <>
@@ -118,6 +126,18 @@ export const LaunchViewContainer = () => {
         <Button onClick={() => setViewType(ViewType.CARDS)}>
           Card <BsCardChecklist></BsCardChecklist>
         </Button>
+
+      </Box>
+
+      <Box>
+        <Button
+          onClick={() => {
+            setFilterLaunch({
+              ...filterLaunch,
+              is_canceled_view: !filterLaunch?.is_canceled_view
+            })
+          }}
+        >{filterLaunch.is_canceled_view ? "See cancel" : "Unsee cancel"} </Button>
       </Box>
 
       <Tabs
@@ -156,6 +176,7 @@ export const LaunchViewContainer = () => {
               setLaunchReceivedProps={setLaunchs}
               setViewType={setViewType}
               viewType={viewType}
+              filterLaunch={filterLaunch}
             ></RecipientLaunchComponent>
           </TabPanel>
 
@@ -185,6 +206,7 @@ interface IRecipientLaunchComponent {
   launchsReceivedProps: LaunchInterface[];
   setLaunchReceivedProps: (lockups: LaunchInterface[]) => void;
   viewType?: ViewType;
+  filterLaunch?: IFilterLaunch;
   setViewType: (viewType: ViewType) => void;
 }
 
@@ -193,6 +215,7 @@ const RecipientLaunchComponent = ({
   setLaunchReceivedProps,
   viewType,
   setViewType,
+  filterLaunch
 }: IRecipientLaunchComponent) => {
   const account = useAccount();
   console.log("launchsReceivedProps", launchsReceivedProps);
@@ -270,7 +293,7 @@ const DepositLaunchComponent = ({
           {deposits?.length > 0 &&
             deposits.map((deposit, i) => {
 
-              if(!deposit?.asset && Number(deposit?.deposited) > 0 ) {
+              if (!deposit?.asset && Number(deposit?.deposited) > 0) {
                 return;
               }
               return (

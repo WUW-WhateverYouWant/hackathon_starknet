@@ -7,6 +7,7 @@ import {
   Th,
   Td,
   Tbody,
+  Button,
 } from "@chakra-ui/react";
 import { LaunchInterface, LaunchCardView } from "../../../types";
 import { feltToAddress } from "../../../utils/starknet";
@@ -15,17 +16,20 @@ import { useAccount } from "@starknet-react/core";
 import { formatDateTime, timeAgo } from "../../../utils/format";
 import { MdCancel } from "react-icons/md";
 import { LaunchInteractions } from "./LaunchInteractions";
+import { IFilterLaunch } from "./LaunchViewContainer";
 
 interface IStreamCard {
   launchs?: LaunchInterface[];
   viewType?: LaunchCardView;
+  filterLaunch?:IFilterLaunch
 }
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
-export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
+export const TableLaunchpad = ({ viewType, launchs, filterLaunch}: IStreamCard) => {
   const account = useAccount().account;
   return (
     <Box overflowX={"auto"}>
+      
       <Table overflow={"auto"} overflowX={"auto"}>
         <>
           <Thead>
@@ -45,6 +49,7 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
           <Tbody>
             {launchs?.length > 0 &&
               launchs.map((l, i) => {
+
                 const sender = feltToAddress(BigInt(l?.owner));
                 const asset = feltToAddress(BigInt(l?.asset));
                 const quote_address = l?.quote_token_address ? feltToAddress(BigInt(l?.quote_token_address)) : "0x";
@@ -104,7 +109,9 @@ export const TableLaunchpad = ({ viewType, launchs }: IStreamCard) => {
                         }
                         </Text>}
                     </Td>
-                    <Td>{Number(total_withdraw?.toString()) / 10 ** 18}</Td>
+                    <Td><Text> Withdraw: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
+                    <Text>Remain: {Number(l.remain_balance)/ 10**18}</Text>
+                    </Td>
 
                     <Td>
                       {sender?.slice(0, 10)} ...

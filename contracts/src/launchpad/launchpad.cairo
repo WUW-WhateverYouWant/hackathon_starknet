@@ -19,6 +19,8 @@ trait ILaunchpad<TContractState> {
         start_date:u64, 
         end_date:u64, 
         soft_cap:u256,
+        hard_cap:u256,
+        min_deposit_by_user:u256,
         max_deposit_by_user:u256,
      
      )-> u64;
@@ -31,6 +33,8 @@ trait ILaunchpad<TContractState> {
         start_date:u64, 
         end_date:u64, 
         soft_cap:u256, 
+        hard_cap:u256,
+        min_deposit_by_user:u256,
         max_deposit_by_user:u256,
         token_per_dollar:u256
     )-> u64;
@@ -70,7 +74,10 @@ trait ILaunchpad<TContractState> {
     fn get_address_token_to_pay_launch(self:@TContractState) -> ContractAddress;
     fn get_amount_paid_dollar_launch(self:@TContractState) -> u256;
     fn get_amount_token_to_pay_launch(self:@TContractState) -> u256;
+    fn get_price_token_selector(self:@TContractState, selector:felt252) -> u256;
 
+    fn get_amount_token_to_pay_launch_median(self:@TContractState) -> u256;
+    fn get_asset_price_median_selector(self:@TContractState, selector:felt252) -> u256;
 }
 
 #[starknet::contract]
@@ -130,7 +137,7 @@ mod Launchpad {
     use openzeppelin::token::erc20::dual20::{
          DualCaseERC20,
     };
-    
+    use alexandria_math::pow;
     use array::ArrayTrait;
     use traits::Into;
     use zeroable::Zeroable;
@@ -337,6 +344,37 @@ mod Launchpad {
 
         }
 
+        fn _get_asset_price_average_converted(self:@ContractState, key:felt252) -> u256 {
+            let oracle_address=self.pragma_oracle_address.read();
+            // TODO assert pragma oracle 
+            assert!(!oracle_address.is_zero(), "oracle undefined");
+            let oracle_dispatcher = IPragmaABIDispatcher{contract_address : oracle_address};
+            let asset=DataType::SpotEntry(key);
+            let output : PragmaPricesResponse= oracle_dispatcher.get_data(asset, AggregationMode::Mean(()));
+
+            // TODO fix conversion u128 to u256
+            let price_128:u128= output.price;
+            let decimals: u128 = output.decimals.into();
+            let multiplier: u128 = pow(10, decimals);
+            // let price:u256= price_128*multiplier;
+            let price_mul= (price_128*multiplier);
+            let price:u256=price_mul.into();
+            // let price:u256=price_128.into();
+            price
+        }
+
+        fn _get_asset_price_average_pragma(self: @ContractState, key:felt252 ) ->  PragmaPricesResponse {
+
+            let oracle_address=self.pragma_oracle_address.read();
+            // TODO assert pragma oracle 
+            assert!(!oracle_address.is_zero(), "oracle undefined");
+            let oracle_dispatcher = IPragmaABIDispatcher{contract_address : oracle_address};
+
+            let asset=DataType::SpotEntry(key);
+            let output : PragmaPricesResponse= oracle_dispatcher.get_data(asset, AggregationMode::Mean(()));
+            return output;
+        }
+
         fn _get_asset_price_average(self: @ContractState, key:felt252 ) ->  u128 {
 
             let oracle_address=self.pragma_oracle_address.read();
@@ -347,6 +385,41 @@ mod Launchpad {
             let asset=DataType::SpotEntry(key);
             let output : PragmaPricesResponse= oracle_dispatcher.get_data(asset, AggregationMode::Mean(()));
             return output.price;
+        }
+
+        fn _get_asset_price_median(self: @ContractState, asset_id: felt252) -> u128 {
+            // Retrieve the oracle dispatcher
+            let oracle_address=self.pragma_oracle_address.read();
+
+            let oracle_dispatcher = IPragmaABIDispatcher {
+                contract_address: oracle_address
+            };
+
+            // Call the Oracle contract, for a spot entry
+            let output: PragmaPricesResponse = oracle_dispatcher
+                .get_data_median(DataType::SpotEntry(asset_id));
+
+            return output.price;
+        }
+
+        fn _get_asset_price_median_converted(self: @ContractState, asset_id: felt252) -> u256 {
+            // Retrieve the oracle dispatcher
+            let oracle_address=self.pragma_oracle_address.read();
+
+            let oracle_dispatcher = IPragmaABIDispatcher {
+                contract_address: oracle_address
+            };
+
+            // Call the Oracle contract, for a spot entry
+            let output: PragmaPricesResponse = oracle_dispatcher
+                .get_data_median(DataType::SpotEntry(asset_id));
+            // TODO fix conversion u128 to u256
+
+            let price_128:u128= output.price;
+            let decimals: u128 = output.decimals.into();
+            let multiplier: u128 = pow(10, decimals);
+            let price:u256= (price_128*multiplier).into();
+            return price;
         }
 
 
@@ -442,8 +515,9 @@ mod Launchpad {
             start_date:u64,
             end_date:u64,
             soft_cap:u256,
+            hard_cap:u256,
+            min_deposit_by_user:u256,
             max_deposit_by_user:u256,
-            // hard_cap:u256 // hard cap
             // is_liquidity:bool // TODO add params 
             // liquidity_percent:u8 //at least 50%
 
@@ -464,6 +538,9 @@ mod Launchpad {
 
             let current_id= self.next_launch_id.read();
             let next_id= current_id+1;
+
+            // TODO Check cap 
+            assert!(soft_cap<= hard_cap, "soft below hard_cap");
 
             let amounts:AmountLaunch = AmountLaunch {
                 deposited:total_amount,
@@ -494,7 +571,9 @@ mod Launchpad {
                 broker:sender,
                 quote_token_address:quote_token_address,
                 soft_cap:soft_cap,
+                hard_cap:hard_cap,
                 is_canceled:false,
+                min_deposit_by_user:min_deposit_by_user,
                 max_deposit_by_user:max_deposit_by_user,
                 token_received_per_one_base:token_received_per_one_base,
                 amounts,
@@ -523,6 +602,8 @@ mod Launchpad {
             start_date:u64,
             end_date:u64,
             soft_cap:u256,
+            hard_cap:u256,
+            min_deposit_by_user:u256,
             max_deposit_by_user:u256,
             token_per_dollar:u256
         ) -> u64 {
@@ -543,6 +624,9 @@ mod Launchpad {
 
             let current_id= self.next_launch_id.read();
             let next_id= current_id+1;
+
+            // TODO Check cap 
+            assert!(soft_cap<= hard_cap, "soft below hard_cap");
 
             let amounts:AmountLaunch = AmountLaunch {
                 deposited:total_amount,
@@ -574,7 +658,9 @@ mod Launchpad {
                 broker:sender,
                 quote_token_address:quote_token_address,
                 soft_cap:soft_cap,
+                hard_cap:hard_cap,
                 is_canceled:false,
+                min_deposit_by_user:min_deposit_by_user,
                 max_deposit_by_user:max_deposit_by_user,
                 amounts,
                 is_refundable:true,
@@ -737,6 +823,8 @@ mod Launchpad {
             // Verify amount 
             assert!(token_amount_base>0, "increase token base");
 
+            assert!(token_amount_base>=launch.min_deposit_by_user, "amount below min_deposit");
+
             // Add amount users
             let mut amount_deposit = self.deposit_user_by_launch.read((sender, launch_id));
             let quote_token_address= launch.quote_token_address;
@@ -746,6 +834,8 @@ mod Launchpad {
             // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
             // soft_cap
             // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
+            assert!(launch.amounts.deposited+token_amount_base<=launch.hard_cap, "hard_cap reach");
+
 
             // TODO oracle calculation ETH
             // Check amount
@@ -761,8 +851,10 @@ mod Launchpad {
                     if !launch.is_base_asset_oracle {
                         amount_to_receive=token_amount_base*launch.token_received_per_one_base +  amount_deposit.total_token_to_be_claimed;
                         let amount_to_claim:u256 = token_amount_base*launch.token_received_per_one_base + amount_deposit.remain_token_to_be_claimed;
+
+                        // TODO uncomment and fix remain balance check and softcap check
                         // assert!(amount_to_receive <= launch.remain_balance, "no token to sell");
-                        assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
+                        // assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
                       
                         amount_deposit.total_token_to_be_claimed =amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed =amount_to_claim;
@@ -776,7 +868,6 @@ mod Launchpad {
                         
                         let selector_of_token=self.market_felt_by_asset.read(launch.quote_token_address);
                         assert!(selector_of_token == 0_felt252, "token oracle undefined");
-
                         // let price = get_asset_price_average(selector_of_token);
                         let price_128 = LaunchpadInternalImpl::_get_asset_price_average(@self, selector_of_token);
                         let price:u256=price_128.into();
@@ -798,8 +889,9 @@ mod Launchpad {
                     // add oracle or simple data to receive depends on amount 
                     if !launch.is_base_asset_oracle {
 
+                        // TODO uncomment and fix remain balance check and softcap check
                         // assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
-                        assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
+                        // assert!( launch.remain_balance >= amount_to_receive, "no token to sell");
 
                         let deposited_amount:DepositByUser= DepositByUser {
                             asset:launch.asset,
@@ -830,7 +922,8 @@ mod Launchpad {
                         let price:u256=price_u128.into();
                         let dollar_price_position= price*token_amount_base;
                         amount_to_receive=dollar_price_position*launch.token_per_dollar;
-                        assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
+                        // TODO uncomment and fix remain balance check and softcap check
+                        // assert!(amount_to_receive<=launch.remain_balance, "no token to sell");
 
                         let deposited_amount_oracle:DepositByUser= DepositByUser {
                             asset:launch.asset,
@@ -855,12 +948,13 @@ mod Launchpad {
 
             //  TODO TODO_URGENT fix
             // Fix Substract amount remain in sale 
-            launch.remain_balance-=amount_to_receive;
+            // launch.remain_balance-=amount_to_receive; // TODO remain balance check above 
             launch.amounts.deposited+=token_amount_base;
+            self.launchs.write(launch_id, launch);
+
             // Send token
             IERC20Dispatcher {contract_address:quote_token_address}.transfer_from(sender, contract, token_amount_base);
 
-            self.launchs.write(launch_id, launch);
             self.emit(EventDepositSend {id:launch_id, owner: sender, deposit:amount_deposit.clone()});
             launch_id
         }
@@ -915,7 +1009,7 @@ mod Launchpad {
         }
 
 
-           /// Views read functions 
+        /// Views read functions 
         // VIEW 
         fn get_launch_by_id(self:@ContractState, launch_id:u64) -> Launch {
 
@@ -934,13 +1028,65 @@ mod Launchpad {
             self.amount_paid_dollar_launch.read()
         }
 
+        fn get_price_token_selector(self:@ContractState, selector:felt252) -> u256 {
+            let price_128 = LaunchpadInternalImpl::_get_asset_price_average(self, selector);
+            let price:u256=price_128.into();
+            price
+        }
+
+        fn get_asset_price_median_selector(self:@ContractState, selector:felt252) -> u256 {
+            let price = LaunchpadInternalImpl::_get_asset_price_median_converted(self, selector);
+            price
+        }
+     
         fn get_amount_token_to_pay_launch(self:@ContractState
         // , token_address:ContractAddress
         ) -> u256 {
             let token_address= self.address_token_to_pay_launch.read();
             let selector_of_token=self.market_felt_by_asset.read(token_address);
-            let price_128 = LaunchpadInternalImpl::_get_asset_price_average(self, selector_of_token);
-            let price:u256=price_128.into();
+            // let price_128 = LaunchpadInternalImpl::_get_asset_price_average(self, selector_of_token);
+            let output = LaunchpadInternalImpl::_get_asset_price_average_pragma(self, selector_of_token);
+            let price_128:u128 = output.price;
+            // TODO fix conversion u128 to u256
+            let decimals: u128 = output.decimals.into();
+            let multiplier: u128 = pow(10, decimals);
+            // let price:u256= price_128*multiplier;
+            let price:u256= (price_128*multiplier).into();
+            // let price:u256=price_128.into();
+            let dollar_to_pay=self.amount_paid_dollar_launch.read();
+            let token_amount_to_pay=dollar_to_pay/price;
+            token_amount_to_pay
+        }
+
+        // TODO OLD CONVERSION USE FIX ABOVE
+        //    fn get_amount_token_to_pay_launch(self:@ContractState
+        // // , token_address:ContractAddress
+        // ) -> u256 {
+        //     let token_address= self.address_token_to_pay_launch.read();
+        //     let selector_of_token=self.market_felt_by_asset.read(token_address);
+        //     let price_128 = LaunchpadInternalImpl::_get_asset_price_average(self, selector_of_token);
+        //     let price:u256= (price_128*multiplier).into();
+        //     // let price:u256=price_128.into();
+        //     let dollar_to_pay=self.amount_paid_dollar_launch.read();
+        //     let token_amount_to_pay=dollar_to_pay/price;
+        //     token_amount_to_pay
+        // }
+
+
+        fn get_amount_token_to_pay_launch_median(self:@ContractState
+        // , token_address:ContractAddress
+        ) -> u256 {
+            let token_address= self.address_token_to_pay_launch.read();
+            let selector_of_token=self.market_felt_by_asset.read(token_address);
+            // let price_128 = LaunchpadInternalImpl::_get_asset_price_median(self, selector_of_token);
+              let output = LaunchpadInternalImpl::_get_asset_price_average_pragma(self, selector_of_token);
+
+            let price_128:u128 = output.price;
+              // TODO fix conversion u128 to u256
+            let decimals: u128 = output.decimals.into();
+            let multiplier: u128 = pow(10, decimals);
+            let price:u256= (price_128*multiplier).into();
+            // let price:u256=price_convert.into();
             let dollar_to_pay=self.amount_paid_dollar_launch.read();
             let token_amount_to_pay=dollar_to_pay/price;
             token_amount_to_pay

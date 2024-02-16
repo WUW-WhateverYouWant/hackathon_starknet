@@ -98,7 +98,7 @@ async function main() {
   // const set_pragma_address = await launchpadContract.set_pragma_address(pragma_address)
   // // set jediwap factory
   // let factory_jediswap_v2 = CONFIG_ADDRESS.JEDIWAP_FACTORY_V2_SEPOLIA
-  // console.log("set_jediswap_v2")
+  // // console.log("set_jediswap_v2")
 
   // const set_jediswap_v2 = await launchpadContract.set_address_jediswap_factory_v2(factory_jediswap_v2)
 
@@ -111,7 +111,7 @@ async function main() {
   // Set fees
   let is_paid_dollar = true;
   let address_token_to_pay = TOKENS_ADDRESS.ETH;
-  let amount_to_paid_dollar_launch = cairo.uint256(10);
+  let amount_to_paid_dollar_launch = cairo.uint256(BigInt(10));
   let selector = shortString.encodeShortString("ETH/USD");
   // let selector = cairo.felt("ETH/USD");
 
@@ -121,28 +121,28 @@ async function main() {
   //   selector,
   //   // { nonce: nonce }
   // )
-  console.log("set oracle")
-
+  // console.log("set_oracle_base_asset")
   // const set_oracle_base_asset = await launchpadContract.set_oracle_base_asset(
   //   address_token_to_pay,
   //   true,
   //   // { nonce: nonce }
   // )
+  // console.log("set_amount_paid_dollar_launch",)
+  // const set_amount_paid_dollar_launch = await launchpadContract.set_amount_paid_dollar_launch(amount_to_paid_dollar_launch)
   // console.log("set_is_paid_dollar_launch")
-
   // const set_is_paid_dollar_launch = await launchpadContract.set_is_paid_dollar_launch(true,);
   const set_is_paid_dollar_launch = await launchpadContract.set_is_paid_dollar_launch(false,);
-
   nonce = await account0.getNonce();
   console.log("nonce", nonce)
   console.log("set token selector")
+  console.log("selector",selector)
 
-  const set_token_selector = await launchpadContract.set_token_selector(
-    address_token_to_pay,
-    selector,
-    // { nonce: nonce }
+  // const set_token_selector = await launchpadContract.set_token_selector(
+  //   address_token_to_pay,
+  //   selector,
+  //   // { nonce: nonce }
 
-  )
+  // )
   // console.log("Admin process setup.", set_fees);
 
   // await provider.waitForTransaction(set_fees);

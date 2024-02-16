@@ -207,6 +207,9 @@ mod test_launchpad {
     }
 
 
+    // TODO 
+    // Issue with timestamp and serialize create_launch
+    // Finish test with launch 
     #[test]
     fn test_launchpad_all() {
         // First declare and deploy a contract

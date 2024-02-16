@@ -23,6 +23,7 @@ Pragma oracle:
 We want to keep building whatever and ship.
 
 - Check all TODO in code
+- Snforge test with timestamp
 - DeFi features and integrations
 - Presale NFT 
 - Refactory and opti

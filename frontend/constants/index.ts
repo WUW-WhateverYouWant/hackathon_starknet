@@ -8,6 +8,7 @@ export const CONFIG_WEBSITE = {
     goerli_explorer: "https://testnet.starkscan.co",
     voyager_explorer: "https://voyager.online",
     goerli_voyager_explorer: "https://goerli.voyager.online",
+    sepolia_voyager_explorer: "https://sepolia.voyager.online",
   },
 
 };

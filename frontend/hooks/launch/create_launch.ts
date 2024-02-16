@@ -38,7 +38,9 @@ export async function create_launch(
   start_date: number,
   end_date: number,
   soft_cap: Uint256,
-  max_deposit_by_user: Uint256
+  hard_cap: Uint256,
+  min_deposit_by_user: Uint256,
+  max_deposit_by_user: Uint256,
 ): Promise<TxCallInterface> {
   try {
 
@@ -61,12 +63,15 @@ export async function create_launch(
 
     const calldataCreateWithDuration = CallData.compile({
       asset: asset,
-      base_asset_token_address: base_asset_token_address,
+      // base_asset_token_address: base_asset_token_address,
+      quote_token_address: base_asset_token_address,
       total_amount: total_amount,
       token_received_per_one_base: token_received_per_one_base,
       start_date: start_date,
       end_date: end_date,
       soft_cap: soft_cap,
+      hard_cap:hard_cap,
+      min_deposit_by_user:min_deposit_by_user,
       max_deposit_by_user: max_deposit_by_user,
     });
 
@@ -85,13 +90,18 @@ export async function create_launch(
       let amount_paid_fees = await launchpadContract.get_amount_token_to_pay_launch();
       console.log("amount_paid_fees",amount_paid_fees)
 
+      if(amount_paid_fees>0 ) {
+        
+      }
+
       let success = await account.execute([
         {
           contractAddress: erc20PaidContract.address,
           entrypoint: "approve",
           calldata: CallData.compile({
             recipient: launchpadContract.address,
-            amount: amount_paid_fees,
+            // amount: cairo.uint256(amount_paid_fees),
+            amount:amount_paid_fees
           }),
         },
         {

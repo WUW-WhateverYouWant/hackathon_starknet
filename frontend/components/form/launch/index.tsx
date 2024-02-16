@@ -77,8 +77,10 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
     broker_account: account?.address,
     broker_fee: undefined,
     broker_fee_nb: undefined,
+    min_deposit_by_user: undefined,
     max_deposit_by_user: undefined,
     soft_cap: undefined,
+    hard_cap:undefined
   });
   useEffect(() => {
     if (address && account) {
@@ -148,6 +150,11 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
         return;
       }
 
+      console.log(
+        "form?.asset",
+        form?.asset
+      );
+
       /***@TODO use starknet check utils isAddress */
       if (form?.asset?.length < ADDRESS_LENGTH) {
         toast({
@@ -159,7 +166,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
       }
       /***@TODO use starknet check utils isAddress */
       console.log(
-        "form?.recipient?.length",
+        "form?.base_asset_token_address?.length",
         form?.base_asset_token_address?.length
       );
       if (
@@ -274,6 +281,8 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
           parseInt(form?.start_date.toString()),
           parseInt(form?.end_date.toString()),
           form?.soft_cap,
+          form?.hard_cap,
+          form?.min_deposit_by_user,
           form?.max_deposit_by_user
           // form?.broker_fee_nb
         );
@@ -350,6 +359,8 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
           parseInt(form?.start_date.toString()),
           parseInt(form?.end_date.toString()),
           form?.soft_cap,
+          form?.hard_cap,
+          form?.min_deposit_by_user,
           form?.max_deposit_by_user
         );
 
@@ -416,8 +427,8 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
       {txHash && (
         <Box py={{ base: "1em" }}>
           <ExternalStylizedButtonLink
-            href={`${CHAINS_NAMES.GOERLI == networkName.toString()
-              ? CONFIG_WEBSITE.page.goerli_voyager_explorer
+            href={`${CHAINS_NAMES.SEPOLIA == networkName.toString()
+              ? CONFIG_WEBSITE.page.sepolia_voyager_explorer
               : CONFIG_WEBSITE.page.voyager_explorer
               }/tx/${txHash}`}
           >
@@ -441,7 +452,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
             Basic details
           </Text>
 
-        
+
 
 
           <Text textAlign={"left"}
@@ -458,7 +469,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
             }}
           ></Input>
 
-<Text textAlign={"left"}
+          <Text textAlign={"left"}
           >
             Asset
           </Text>
@@ -512,7 +523,7 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
           w={{ base: "100%", md: "fit-content" }}
         >
           <Text textAlign={"left"} fontFamily={"PressStart2P"}>
-          Launchpad Details 
+            Launchpad Details
           </Text>
           <Box
             height={"100%"}
@@ -543,6 +554,28 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                 });
               }}
               placeholder="Soft cap"
+            ></Input>
+
+            <Text textAlign={"left"}
+            >
+              Hard cap
+            </Text>
+
+            <Input
+              py={{ base: "0.5em" }}
+              type="number"
+              my={{ base: "0.25em", md: "0.5em" }}
+              aria-valuetext={String(form?.soft_cap)}
+              onChange={(e) => {
+                let str = String(Number(e?.target?.value) * 10 ** 18);
+
+                setForm({
+                  ...form,
+                  // soft_cap: cairo.uint256(parseInt(e?.target?.value)),
+                  hard_cap: cairo.uint256(parseInt(str)),
+                });
+              }}
+              placeholder="Hard cap"
             ></Input>
 
 
@@ -581,10 +614,11 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
               type="number"
               my={{ base: "0.25em", md: "0.5em" }}
               onChange={(e) => {
+                let str_pow = String(Number(e?.target?.value) * 10 ** 18);
                 setForm({
                   ...form,
                   max_deposit_by_user: cairo.uint256(
-                    parseInt(e?.target?.value)
+                    parseInt(str_pow)
                   ),
                   // broker_fee_nb: Number(e?.target?.value),
                   // broker: {
@@ -594,6 +628,27 @@ const CreateLaunchForm = ({ }: ICreateSaleForm) => {
                 });
               }}
               placeholder="Max deposit per user"
+            ></Input>
+
+
+            <Text textAlign={"left"}>
+              Min deposit per user
+            </Text>
+            <Input
+              py={{ base: "0.5em" }}
+              type="number"
+              my={{ base: "0.25em", md: "0.5em" }}
+              onChange={(e) => {
+                let str_pow = String(Number(e?.target?.value) * 10 ** 18);
+
+                setForm({
+                  ...form,
+                  min_deposit_by_user: cairo.uint256(
+                    parseInt(str_pow)
+                  ),
+                });
+              }}
+              placeholder="Min deposit per user"
             ></Input>
 
             <Text textAlign={"left"} fontFamily={"PressStart2P"}>
