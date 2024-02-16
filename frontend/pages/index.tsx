@@ -94,20 +94,21 @@ const Home: NextPage = ({}) => {
               </Box>
             </Box>
 
-            <Tabs>
+            <LaunchViewContainer></LaunchViewContainer>
+
+            {/* <Tabs>
               <TabList>
                 <Tab>Launchpad</Tab>
                 <Tab>Whatever</Tab>
               </TabList>
               <TabPanels>
                 <TabPanel>
-                  <LaunchViewContainer></LaunchViewContainer>
                 </TabPanel>
                 <TabPanel>
                   <LaunchViewContainer></LaunchViewContainer>
                 </TabPanel>
               </TabPanels>
-            </Tabs>
+            </Tabs> */}
           </Box>
         </Box>
       </Box>

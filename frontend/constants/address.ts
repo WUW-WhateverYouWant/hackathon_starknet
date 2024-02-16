@@ -8,7 +8,7 @@ export const CHAIN_IDS = {
 
 export const CHAINS_NAMES = {
   GOERLI: "Starknet Goerli Testnet",
-  SEPOLIA: "Starknet Sepolia Testnet",
+  SEPOLIA: "Starknet Goerli Testnet",
 }
 
 

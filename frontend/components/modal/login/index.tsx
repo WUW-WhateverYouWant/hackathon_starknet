@@ -11,11 +11,12 @@ import {
   useColorModeValue,
   ButtonProps,
 } from "@chakra-ui/react";
-import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { useAccount, useConnect, useDisconnect, useNetwork } from "@starknet-react/core";
 import { CONFIG_WEBSITE } from "../../../constants";
 import { ExternalStylizedButtonLink } from "../../button/NavItem";
 import { installWallet } from "../../../utils/connect";
 import { useEffect } from "react";
+import { CHAINS_NAMES, CHAIN_IDS } from "../../../constants/address";
 interface IAdminPanelGroup {
   modalOpen: boolean;
   chatId?: string;
@@ -41,6 +42,11 @@ const ConnectModal = ({
   useEffect(()=> {
     
   },[address])
+
+  const network = useNetwork()
+  const networkName= network?.chain?.name
+  const chainId= network?.chain?.id.toString()
+
   return (
     <Box>
       <Button
@@ -104,7 +110,7 @@ const ConnectModal = ({
                 <Text>Address: {address}</Text>
                 <Box display={"grid"} gap={{ base: "0.5em" }}>
                   <ExternalStylizedButtonLink
-                    href={`${CONFIG_WEBSITE.page?.explorer}/contract/${address}`}
+                    href={`${ CONFIG_WEBSITE.page.sepolia_voyager_explorer}/contract/${address}`}
                     width={"150px"}
                   >
                     Explorer

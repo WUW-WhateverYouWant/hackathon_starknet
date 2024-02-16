@@ -1,11 +1,26 @@
 Build whatever
 By WUW - Whatever You Want 
 
+
+## Sponsors
+- Pragma 
+- Jediswap
+- Madara track (not connected here yet, early phase)
+
+
 # Overview 
 
+WUW is building whatever.
+Starting with a Launchpad MVP connected with Pragma and Jediswap V2 for liquidity.
+
+Website: 
+https://starknet-hackathon.wuwfi.xyz
+A new website coming soon, keep building after
 
 ## What we can do: Hackathon TODO 
+
 Launchpad for ERC20
+- Sale your tokens with many params like soft cap, min, and max deposit, etc.
 
 Jediswap interactions : 
 - Add liquidity
@@ -13,11 +28,6 @@ Jediswap interactions :
 Pragma oracle: 
 - Dynamic fees
 - Dynamic buy by oracle
-
-
-## Sponsors
-- Pragma 
-- Jediswap
 
 # TODO 
 We want to keep building whatever and ship.

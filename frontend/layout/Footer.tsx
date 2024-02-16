@@ -143,13 +143,14 @@ export default function FooterLarge() {
               pt={"2em"}
               justifyContent={"center"}
             >
+
               <SocialButton
                 isExternal={true}
-                title={`${CONFIG_WEBSITE.title}  Portal`}
-                label="Portal"
-                href={CONFIG_WEBSITE?.page?.portal}
+                title={`${CONFIG_WEBSITE.title.toString()} Twitter OG Friends Community`}
+                label="Twitter"
+                href={CONFIG_SOCIAL.twitter.link}
               >
-                <MdWeb></MdWeb>
+                <BsTwitter></BsTwitter>
               </SocialButton>
 
               <SocialButton
@@ -163,12 +164,13 @@ export default function FooterLarge() {
 
               <SocialButton
                 isExternal={true}
-                title={`${CONFIG_WEBSITE.title.toString()} Twitter OG Friends Community`}
-                label="Twitter"
-                href={CONFIG_SOCIAL.twitter.link}
+                title={`${CONFIG_WEBSITE.title}  Portal`}
+                label="Portal"
+                href={CONFIG_WEBSITE?.page?.portal}
               >
-                <BsTwitter></BsTwitter>
+                <MdWeb></MdWeb>
               </SocialButton>
+
               {/* <SocialButton
                 isExternal={true}
                 title={`${CONFIG_WEBSITE.title?.toString()} Youtube Channel`}

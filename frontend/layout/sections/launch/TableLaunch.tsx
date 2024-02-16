@@ -55,7 +55,7 @@ export const TableLaunchpad = ({ viewType, launchs, filterLaunch}: IStreamCard) 
                 const quote_address = l?.quote_token_address ? feltToAddress(BigInt(l?.quote_token_address)) : "0x";
                 let total_amount = l?.amounts?.deposited;
                 let total_withdraw = l?.amounts?.withdrawn;
-                console.log("l", l);
+                // console.log("l", l);
                 const startDateBn = Number(l.start_date.toString());
                 const startDate = new Date(startDateBn);
                 const endDateBn = Number(l.end_date.toString());

@@ -65,7 +65,7 @@ export const LaunchViewContainer = () => {
     const getAllLaunchs = async () => {
 
       const launchs = await get_all_launchs();
-      console.log("all_launchs", launchs)
+      // console.log("all_launchs", launchs)
       let launchsFilter = launchs?.filter((launch) => {
         if ( filterLaunch.is_canceled_view == true && launch.is_canceled) {
           return;
