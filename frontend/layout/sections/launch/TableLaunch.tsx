@@ -82,7 +82,9 @@ export const TableLaunchpad = ({ viewType, launchs, filterLaunch}: IStreamCard) 
                         <LaunchInteractions launch={l}></LaunchInteractions>
                       </Td>
                     </Box>
-                    <Td>{quote_address}</Td>
+                    <Td>
+                    {quote_address?.slice(0, 10)} ...
+                      {quote_address?.slice(quote_address?.length - 10, quote_address?.length)}{" "}</Td>
                     <Td>{Number(total_amount?.toString()) / 10 ** 18}</Td>
 
                     <Td

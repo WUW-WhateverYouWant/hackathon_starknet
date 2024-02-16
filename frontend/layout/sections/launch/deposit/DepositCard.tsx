@@ -16,19 +16,6 @@ interface IDepositCard {
 
 /** @TODO get component view ui with call claim reward for recipient visibile */
 export const DepositCard = ({ deposit, viewType, }: IDepositCard) => {
-  const account = useAccount().account;
-  const address = account?.address;
-
-  const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
-  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(cairo.uint256(0));
-  useEffect(() => {
-    const updateWithdrawTo = () => {
-      if (!withdrawTo && address) {
-        setWithdrawTo(address);
-      }
-    };
-    updateWithdrawTo();
-  }, [address]);
 
   return (
     <>

@@ -53,7 +53,7 @@ export const LaunchViewContainer = () => {
   const [selectView, setSelectView] = useState<EnumStreamSelector>(
     EnumStreamSelector.SENDER
   );
-  const [viewType, setViewType] = useState<ViewType>(ViewType.TABS);
+  const [viewType, setViewType] = useState<ViewType>(ViewType.CARDS);
 
   const [filterLaunch, setFilterLaunch] = useState<IFilterLaunch>({
     is_canceled_view: true,

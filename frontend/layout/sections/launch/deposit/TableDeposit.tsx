@@ -29,19 +29,18 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
           <Thead>
             <Tr>
               <Th>Token address</Th>
-              <Th>To claim</Th>
-              <Th>Quote address</Th>
-              <Th>Status</Th>
               <Th>Actions</Th>
-              <Th>Amount deposit</Th>
+              {/* <Th>To claim</Th> */}
+              <Th>Quote address</Th>
               <Th>Datas</Th>
+              <Th>Status</Th>
             </Tr>
           </Thead>
           <Tbody>
             {deposits?.length > 0 &&
               deposits.map((deposit, i) => {
 
-                if(!deposit?.asset && Number(deposit?.deposited) > 0 ) {
+                if (!deposit?.asset && Number(deposit?.deposited) > 0) {
                   return;
                 }
                 const asset = deposit?.asset && feltToAddress(BigInt(deposit?.asset));
@@ -62,25 +61,29 @@ export const TableDeposit = ({ viewType, deposits }: ITableDepositByUser) => {
                         {asset.length > 0 && asset?.slice(0, 10)} ...
                         {asset?.slice(asset?.length - 10, asset?.length)}{" "}
                       </Text>}
-
                     </Td>
                     <Box
                       gap={{ base: "1em" }}
                     >
                       <Td
                         minW={{ base: "150px", md: "200px" }}
-                        w={"100%"}>
+                      // w={"100%"}
+                      >
                         <DepositInteractions deposit={deposit}></DepositInteractions>
                       </Td>
                     </Box>
-                    <Td>{quote_address}</Td>
+                    <Td>
+                      <Text>
+                        {asset.length > 0 && asset?.slice(0, 10)} ...
+                        {asset?.slice(asset?.length - 10, asset?.length)}
+                      </Text>
+                    </Td>
 
                     <Td>
-
-                      <Text> Total to be claim: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
                       <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text>
-
                       <Text>To claim: {Number(total_token_to_be_claimed?.toString())}</Text>
+                      <Text>Total withdraw: {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
+                      <Text>Refunded: {Number(deposit.refunded?.toString())}</Text>
                     </Td>
 
                     <Td>{deposit.is_canceled && <Text >Cancel: <MdCancel></MdCancel>

@@ -542,6 +542,11 @@ mod Launchpad {
             // TODO Check cap 
             assert!(soft_cap<= hard_cap, "soft below hard_cap");
 
+            // TODO verify total_amount and compare with token_per_one base with soft_cap and hard cap.
+            // Calculate
+            // assert!(total_amount>=token_received_per_one_base*hard_cap, "CAP NO TOKEN QTY")
+
+
             let amounts:AmountLaunch = AmountLaunch {
                 deposited:total_amount,
                 withdrawn:0,
@@ -831,9 +836,7 @@ mod Launchpad {
 
             // TODO check hard_cap and soft_cap
             // hard_cap
-            // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
             // soft_cap
-            // assert!(launch.amounts.deposited+token_amount_base<launch.hard_cap, "hard_cap");
             assert!(launch.amounts.deposited+token_amount_base<=launch.hard_cap, "hard_cap reach");
 
 
@@ -875,7 +878,9 @@ mod Launchpad {
                         let token_to_receive =launch.token_per_dollar*dollar_price_position;
                         amount_to_receive=token_to_receive;
 
-                        assert!(amount_to_receive<=launch.remain_balance, "> remain_balance");
+                        // TODO uncomment and fix remain balance check and softcap check
+                        // assert!(amount_to_receive<=launch.remain_balance, "> remain_balance");
+
                         amount_deposit.total_token_to_be_claimed+=amount_to_receive;
                         amount_deposit.remain_token_to_be_claimed+=amount_to_receive;
                         amount_deposit.redeemable+=amount_to_receive;

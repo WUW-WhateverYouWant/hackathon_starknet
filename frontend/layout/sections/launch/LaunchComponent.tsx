@@ -1,4 +1,4 @@
-import { Box, Card, Text, Button, CardFooter, Input } from "@chakra-ui/react";
+import { Box, Card, Text, Button, CardFooter, Input, Progress } from "@chakra-ui/react";
 import { LaunchInterface, LaunchCardView } from "../../../types";
 import {
   Uint256,
@@ -39,7 +39,7 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
   const address = account?.address;
 
   const [withdrawTo, setWithdrawTo] = useState<string | undefined>(address);
-  const [amountToBuy, setAmountToBuy] = useState<Uint256  | undefined>(
+  const [amountToBuy, setAmountToBuy] = useState<Uint256 | undefined>(
     cairo.uint256(0)
     // 0
   );
@@ -53,6 +53,8 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
   }, [address]);
 
   const owner = feltToAddress(BigInt(launch?.owner?.toString()));
+  const asset = feltToAddress(BigInt(launch?.asset?.toString()));
+  const quote_token_address = feltToAddress(BigInt(launch?.quote_token_address?.toString()));
   function timeAgo(date: Date): string {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -71,6 +73,7 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
     }
   }
   let total_amount = launch?.amounts?.deposited;
+  const progress = (Number(launch?.amounts?.deposited) / Number(launch?.hard_cap)) * 100;
   return (
     <>
       <Box
@@ -82,9 +85,50 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
         // justifyContent={"space-between"}
         height={"100%"}
       >
-        <Text>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text>
-        <Box 
-        display={{ md: "flex" }}
+        <Box>
+          <Box>
+            <Progress colorScheme={progress >= 100 ? 'green' : 'orange'} size="sm" value={progress} />
+            <Text>
+              Progress: {progress} %
+            </Text>
+            <Box
+
+              display={{ base: "flex" }}
+              justifyItems={"start"}
+              alignContent={"start"}
+              justifyContent={"space-around"}
+            >
+              <Text>Soft cap: {Number(launch.soft_cap) / 10 ** 18}</Text>
+              <Text>Hardcap: {Number(launch.hard_cap) / 10 ** 18}</Text>
+
+            </Box>
+
+          </Box>
+        </Box>
+
+
+        <Box>
+          {/* <Text wordBreak={"break-all"}>Asset: {feltToAddress(BigInt(launch.asset.toString()))}</Text> */}
+          <Text wordBreak={"break-all"}>Asset address:</Text>
+
+          <ExternalStylizedButtonLink
+            // pb={{ base: "0.5em" }}
+            textOverflow={"no"}
+            // maxW={{ md: "170px" }}
+            href={`${CONFIG_WEBSITE.page.sepolia_voyager_explorer}/contract/${asset}`}
+          >
+            {/* <Text>{senderAddress}</Text> */}
+            <Text wordBreak={"break-all"}>  {asset?.slice(0, 10)} ...
+              {asset?.slice(asset?.length - 10, asset?.length)}{" "}</Text>
+
+          </ExternalStylizedButtonLink>
+        </Box>
+
+
+
+
+        <Box
+          display={{ md: "flex" }}
         >
           <Box>
             <Text>Start Date: {formatDateTime(startDate)}</Text>
@@ -126,17 +170,41 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
             // pb={{ base: "0.5em" }}
             textOverflow={"no"}
             maxW={{ md: "170px" }}
-            href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${owner}`}
+            href={`${CONFIG_WEBSITE.page.sepolia_voyager_explorer}/contract/${owner}`}
           >
             {/* <Text>{senderAddress}</Text> */}
             <Text>Owner explorer</Text>
           </ExternalStylizedButtonLink>
         </Box>
 
+        <Text>Amount to sell: {Number(total_amount) / 10 ** 18}</Text>
+
+
         <Box>
-          <Text>Amount: {Number(total_amount) / 10 ** 18}</Text>
+          {/* <Text>Quote: {quote_token_address}</Text> */}
+          <Text>Quote token: </Text>
+
+          <ExternalStylizedButtonLink
+            textOverflow={"no"}
+            href={`${CONFIG_WEBSITE.page.sepolia_voyager_explorer}/contract/${quote_token_address}`}
+          >
+            {/* <Text>{senderAddress}</Text> */}
+            <Text>{quote_token_address?.slice(0, 10)} ...
+              {quote_token_address?.slice(quote_token_address?.length - 10, quote_token_address?.length)}{" "}</Text>
+          </ExternalStylizedButtonLink>
+        </Box>
+
+
+        {launch?.amounts?.deposited && (
+          <Text>
+            Deposited: {Number(launch.amounts?.deposited) / 10 ** 18}
+          </Text>
+        )}
+
+        <Box>
 
           <Box display={{ base: "flex" }} gap={{ base: "0.5em" }}>
+
             {launch?.amounts?.refunded && (
               <Text>
                 Refunded {Number(launch.amounts?.refunded) / 10 ** 18}
@@ -152,7 +220,7 @@ export const LaunchComponent = ({ launch, viewType, id }: ILaunchPageView) => {
 
         <LaunchInteractions launch={launch} id={id}></LaunchInteractions>
 
-   
+
       </Box>
     </>
   );

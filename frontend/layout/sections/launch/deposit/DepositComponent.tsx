@@ -79,15 +79,14 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
         height={"100%"}
       >
 
-
-        {deposit.asset && <Text>Asset: {feltToAddress(BigInt(deposit.asset.toString()))}</Text>}
+        {deposit.asset && <Text>Asset: {asset}</Text>}
 
         {deposit?.asset &&
           <ExternalStylizedButtonLink
             // pb={{ base: "0.5em" }}
             textOverflow={"no"}
             maxW={{ md: "170px" }}
-            href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${deposit?.asset}`}
+            href={`${CONFIG_WEBSITE.page.goerli_voyager_explorer}/contract/${asset}`}
           >
             {/* <Text>{senderAddress}</Text> */}
             <Text> Asset</Text>
@@ -98,8 +97,10 @@ export const DepositComponent = ({ deposit, viewType, id }: IDepositComponentPag
         >
 
           <Text>Deposited {Number(total_amount.toString()) / 10 **18}</Text>
+          <Text>Claim {Number(total_token_to_be_claimed.toString())}</Text>
 
-          <Text>To claim: {Number(total_token_to_be_claimed?.toString()) / 10 ** 18}</Text>
+
+          {/* <Text>To claim: {Number(total_token_to_be_claimed?.toString()) / 10 ** 18}</Text> */}
           <Text> Withdraw {Number(total_withdraw?.toString()) / 10 ** 18}</Text>
         </Box>
         {/* <Text>Deposited {Number(total_amount.toString()) / 10 ** 18}</Text> */}
